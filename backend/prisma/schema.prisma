@@ -1,0 +1,90 @@
+// prisma/schema.prisma
+
+// ============================================================
+// DATASOURCE & GENERATOR
+// ============================================================
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+enum Permit {
+  internal
+  external
+}
+
+enum Status {
+  online
+  degraded
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Icon {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  category Category[]
+  links    Link[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  name      String
+  iconName  String
+  colorHex  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  icon  Icon  @relation(fields: [iconName], references: [name])
+  links Link[]
+
+  @@index([iconName])
+}
+
+model Link {
+  id         Int      @id @default(autoincrement())
+  slug       String   @unique
+  name       String
+  url        String
+  desc       String   @default("")
+  iconName   String
+  status     Status   @default(online)
+  permit     Permit   @default(external)
+  categoryId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  icon     Icon     @relation(fields: [iconName], references: [name])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  // Constraints
+  @@unique([name, categoryId])
+  @@index([iconName])
+  @@index([categoryId])
+  @@index([permit])
+}
