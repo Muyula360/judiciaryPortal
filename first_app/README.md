@@ -34,3 +34,25 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+.env files 
+
+NEXT_PUBLIC_API_URL=http://localhost:5001/api
+
+# .env.local
+
+# API Base URLs
+NEXT_PUBLIC_API_BASE_URL=https://cms.judiciary.go.tz/api/JotCMS/portal
+
+# Case Fetch Endpoints
+NEXT_PUBLIC_API_PRIMARY_CASE_BY_REFERENCE=${NEXT_PUBLIC_API_BASE_URL}/fetch/primary/case/byreference
+NEXT_PUBLIC_API_OTHER_LEVEL_CASE_BY_REFERENCE=${NEXT_PUBLIC_API_BASE_URL}/fetch/case/details/byreference
+NEXT_PUBLIC_API_PRIMARY_CASE_DETAILS=${NEXT_PUBLIC_API_BASE_URL}/primary/case/get-primary-case-details
+NEXT_PUBLIC_API_OTHER_LEVEL_CASE_DETAILS=${NEXT_PUBLIC_API_BASE_URL}/primary/case/details
+
+# Courts and Case Types Endpoints
+NEXT_PUBLIC_API_COURTS=${NEXT_PUBLIC_API_BASE_URL}/courts
+NEXT_PUBLIC_API_PRIMARY_CASE_TYPES=${NEXT_PUBLIC_API_BASE_URL}/primary_court_case_type
+NEXT_PUBLIC_API_OTHER_CASE_TYPES=${NEXT_PUBLIC_API_BASE_URL}/case-subtypes
+NEXT_PUBLIC_API_CAUSE_LIST=${NEXT_PUBLIC_API_BASE_URL}/causelist/bycourtname
