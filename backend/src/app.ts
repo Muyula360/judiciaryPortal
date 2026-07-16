@@ -8,6 +8,8 @@ import categoryRoutes from './routes/category.routes';
 import linkRoutes from './routes/link.routes';
 import iconRoutes from './routes/icon.routes';
 import { errorHandler } from './middlewares/errorHandler';
+import caseDetailRoutes from './routes/caseDetail.routes';
+import primaryCourtRoutes from './routes/primaryCourt.routes';
 
 dotenv.config();
 
@@ -23,6 +25,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/links', linkRoutes);
 app.use('/api/icons', iconRoutes);
+app.use('/api/cases', caseDetailRoutes);
+app.use('/api/primary-courts', primaryCourtRoutes);
 
 // Health check (also tests DB connectivity)
 app.get('/api/health', async (req, res) => {

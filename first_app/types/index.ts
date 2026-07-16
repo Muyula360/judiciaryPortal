@@ -29,3 +29,32 @@ export interface Category {
   createdAt: string;
   updatedAt: string;
 }
+
+// types/index.ts
+export interface Court {
+  id: number;
+  name: string;
+}
+
+export interface Case {
+  id: number;
+  filingDate?: string;
+  caseNumber?: string;
+  caseYear?: string;
+  court?: string;
+  caseTitle?: string;
+  caseParties?: string;
+  assigned?: boolean;
+  assignedDate?: string;
+  judgeName?: string;
+  caseReference?: string;
+  nextStageDate?: string;
+  nextStageTime?: string;
+  nextStage?: string;
+  courtRoomName?: string;
+  proceedingOutcomeStatus?: string;
+  lastOrder?: string | null;
+  caseOutcome?: string | null;
+  isDecided?: boolean;
+}
+

@@ -1,94 +1,345 @@
-// app/case-details/page.tsx
+// app/home/(pages)/cause_list/page.tsx
+
 'use client';
-import { useState } from 'react';
+
+import { useState, useMemo } from 'react';
 import * as Fa from 'react-icons/fa';
 import { useTheme } from '@/app/context/ThemeContext';
-import Link from 'next/link';
-import PrimaryCourtSection from './Component/primaryCourtSection';
-import OtherCourtSection from './Component/otherCourtSection';
-import ByRefNoSection from './Component/byRefNoSection';
+import SideLinks from '../../components/SideLink';
+import ResultsModal from './components/ResultsModal';
+import CaseNumberForm from './components/CaseNumberForm';
+import ReferenceNumberForm from './components/ReferenceNumberForm';
+import FormTabs from './components/FormTabs';
+import { useCaseFetch } from '@/hooks/useCaseDetails';
+import { useCaseDetails } from '@/hooks/useCauseList';
 
-export default function CaseDetailsPage() {
-    const { isDarkTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState('primary');
+interface Case {
+  id: string;
+  caseTitle: string;
+  judgeName: string;
+  caseParties: string;
+  refNo: string;
+  courtRoom: string;
+  courtName: string;
+  time: string;
+  date: string;
+  caseStage: string;
+  caseOutcome?: string;
+  courtLevel?: string;
+}
 
-  const renderPrimaryCourt = () => (
-    <PrimaryCourtSection />
-  );
-  const renderOtherCourts = () => (
-    <OtherCourtSection />
-  );
-  const renderByReferenceNumber = () => (
-    <ByRefNoSection />
-  );
+export default function CauseList() {
+  const { isDarkTheme } = useTheme();
+  const { 
+    fetchCaseByLevel, 
+    fetchCaseByNumber, 
+    loading: apiLoading, 
+    error: apiError, 
+    clearError 
+  } = useCaseFetch();
+  
+  // State for Case Number tab
+  const [courtLevel, setCourtLevel] = useState('');
+  const [courtLevelSearchTerm, setCourtLevelSearchTerm] = useState('');
+  const [courtName, setCourtName] = useState('');
+  const [courtNameSearchTerm, setCourtNameSearchTerm] = useState('');
+  const [caseType, setCaseType] = useState('');
+  const [caseTypeSearchTerm, setCaseTypeSearchTerm] = useState('');
+  const [filingYear, setFilingYear] = useState('');
+  const [caseNumber, setCaseNumber] = useState('');
+
+  // State for Reference Number tab
+  const [selectedCourt, setSelectedCourt] = useState('');
+  const [courtSearchTerm, setCourtSearchTerm] = useState('');
+  const [referenceNumber, setReferenceNumber] = useState('');
+
+  const [filteredCases, setFilteredCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [errors, setErrors] = useState<{ 
+    court: string; 
+    caseNumber?: string; 
+    referenceNumber?: string;
+    caseType?: string;
+    filingYear?: string;
+  }>({ 
+    court: '' 
+  });
+
+  // TABS STATE
+  const [activeTab, setActiveTab] = useState('caseNumber');
+
+  const courtLevels = [
+    'Primary Court',
+    'Other Level Court'
+  ];
+
+  const { uniqueCourts, fetchingCourts } = useCaseDetails();
+
+  const filteredCourts = useMemo(() => {
+    if (!courtNameSearchTerm) return uniqueCourts;
+    return uniqueCourts.filter(court =>
+      court.toLowerCase().includes(courtNameSearchTerm.toLowerCase())
+    );
+  }, [uniqueCourts, courtNameSearchTerm]);
+
+  const getYears = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear; i >= currentYear - 20; i--) {
+      years.push(i);
+    }
+    return years;
+  };
+
+  // Validate form based on active tab
+  const validateForm = () => {
+    const newErrors: any = { court: '' };
+    let isValid = true;
+
+    if (activeTab === 'caseNumber') {
+      if (!caseNumber.trim()) {
+        newErrors.caseNumber = 'Case Number is required';
+        isValid = false;
+      }
+      if (!courtLevel) {
+        newErrors.court = 'Please select a court level';
+        isValid = false;
+      }
+      if (!courtName) {
+        newErrors.court = 'Please select a court name';
+        isValid = false;
+      }
+      if (!filingYear) {
+        newErrors.filingYear = 'Please select a filing year';
+        isValid = false;
+      }
+      if (!caseType) {
+        newErrors.caseType = 'Please select a case type';
+        isValid = false;
+      }
+    } else {
+      if (!referenceNumber.trim()) {
+        newErrors.referenceNumber = 'Reference Number is required';
+        isValid = false;
+      }
+      if (!selectedCourt) {
+        newErrors.court = 'Please select a court level';
+        isValid = false;
+      }
+    }
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('🔥🔥🔥 FORM SUBMIT HANDLER WAS CALLED! 🔥🔥🔥');
+    console.log('Active Tab:', activeTab);
+    console.log('Form values:', {
+      caseNumber,
+      courtLevel,
+      courtName,
+      filingYear,
+      caseType,
+      referenceNumber,
+      selectedCourt
+    });
+    
+    clearError?.();
+    setErrors({ court: '' });
+    
+    if (!validateForm()) {
+      console.log('🔴 Validation failed:', errors);
+      return;
+    }
+    console.log('🟢 Validation passed');
+
+    setLoading(true);
+    
+    try {
+      if (activeTab === 'referenceNumber') {
+        console.log('🟡 Fetching by Reference Number:', referenceNumber, 'Court Level:', selectedCourt);
+        const fetchedCase = await fetchCaseByLevel(referenceNumber, selectedCourt);
+        console.log('🟡 Fetch Result:', fetchedCase);
+        
+        if (fetchedCase) {
+          setFilteredCases([fetchedCase]);
+          setShowResultsModal(true);
+        } else {
+          setFilteredCases([]);
+          setErrors(prev => ({ ...prev, referenceNumber: apiError || 'No case found' }));
+          setShowResultsModal(true);
+        }
+      } else {
+        console.log('🟡 Fetching by Case Number:', caseNumber);
+        console.log('🟡 Parameters:', { caseNumber, courtLevel, courtName, filingYear, caseType });
+        
+        const fetchedCase = await fetchCaseByNumber(
+          caseNumber,
+          courtLevel,
+          courtName,
+          filingYear,
+          caseType
+        );
+        console.log('🟡 Fetch Result:', fetchedCase);
+        
+        if (fetchedCase) {
+          setFilteredCases([fetchedCase]);
+          setShowResultsModal(true);
+        } else {
+          setFilteredCases([]);
+          setErrors(prev => ({ ...prev, caseNumber: apiError || 'No case found with the provided details' }));
+          setShowResultsModal(true);
+        }
+      }
+    } catch (err) {
+      console.error('🔴 ERROR in handleSubmit:', err);
+      setErrors(prev => ({ ...prev, caseNumber: 'Failed to fetch case details. Please try again.' }));
+      setShowResultsModal(true);
+    } finally {
+      console.log('🟣 Setting loading to false');
+      setLoading(false);
+    }
+  };
+
+  // Reset filters for Case Number tab
+  const handleResetCaseNumber = () => {
+    setCourtLevel('');
+    setCourtLevelSearchTerm('');
+    setCourtName('');
+    setCourtNameSearchTerm('');
+    setCaseType('');
+    setCaseTypeSearchTerm('');
+    setFilingYear('');
+    setCaseNumber('');
+    setFilteredCases([]);
+    setShowResultsModal(false);
+    setErrors({ court: '' });
+    clearError?.();
+  };
+
+  // Reset filters for Reference Number tab
+  const handleResetReferenceNumber = () => {
+    setSelectedCourt('');
+    setCourtSearchTerm('');
+    setReferenceNumber('');
+    setFilteredCases([]);
+    setShowResultsModal(false);
+    setErrors({ court: '' });
+    clearError?.();
+  };
+
+  const handleTabChange = () => {
+    setErrors({ court: '' });
+    clearError?.();
+  };
+
+  const closeResultsModal = () => {
+    setShowResultsModal(false);
+  };
+
   return (
-    <div className="flex-grow px-4 sm:px-6 lg:px-28 pt-6 pb-2">
-      <div className="max-w-full mx-auto">
-        <div className="mb-0">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-3">
-              <Fa.FaGavel className={`w-5 h-5 ${isDarkTheme ? 'text-rose-400' : 'text-rose-600'}`} />
-              <h1 className={`text-xl md:text-xl font-bold ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
-                Case Details
-              </h1>
+    <div className="flex-grow px-5 sm:px-20 md:px-30 lg:px-40 xl:px-50 2xl:px-60 pt-6 sm:pt-8 md:pt-10 lg:pt-12 pb-3">
+      <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-10 xl:gap-12">
+        {/* Left Column */}
+        <div className="w-full lg:w-[50%] xl:w-[50%] 2xl:w-[40%]">
+          <div className="sticky pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className={`text-2xl font-bold flex items-center gap-2 ${isDarkTheme ? 'text-white' : 'text-gray-400'}`}>
+                  <span className="text-3xl">⚖️</span>
+                  Case Details
+                </h2>
+                <p className={`text-sm ${isDarkTheme ? 'text-white' : 'text-white'}`}>
+                  Find Details of the case on your own by searching below.
+                </p>
+              </div>
             </div>
-            <Link 
-              href='/' 
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                isDarkTheme
-                  ? 'bg-slate-700 hover:bg-rose-200 text-white hover:text-slate-900'
-                  : 'bg-slate-200 hover:bg-rose-200 text-slate-700 hover:text-slate-900'
-              }`}
-            >
-              <Fa.FaArrowLeft />Back to Portal
-            </Link>
+
+            <form onSubmit={handleSubmit} noValidate>
+              <div className={`rounded-xl backdrop-blur-sm border transition-all duration-300 flex flex-col ${
+                isDarkTheme 
+                  ? 'bg-slate-900/50 border-slate-700/50 hover:border-slate-600' 
+                  : 'bg-white/80 border-slate-200/80 hover:border-slate-300'
+              }`} style={{ maxHeight: '400px' }}>
+                
+                <div className="flex-shrink-0 px-6 pt-4 pb-2 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 bg-inherit backdrop-blur-sm rounded-t-xl">
+                  <FormTabs
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    isDarkTheme={isDarkTheme}
+                    onTabChange={handleTabChange}
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-10 py-4">
+                  <div className="flex flex-col gap-3">
+                    {activeTab === 'caseNumber' ? (
+                      <CaseNumberForm
+                        caseNumber={caseNumber}
+                        setCaseNumber={setCaseNumber}
+                        courtLevel={courtLevel}
+                        setCourtLevel={setCourtLevel}
+                        courtLevelSearchTerm={courtLevelSearchTerm}
+                        setCourtLevelSearchTerm={setCourtLevelSearchTerm}
+                        courtLevels={courtLevels}
+                        courtName={courtName}
+                        setCourtName={setCourtName}
+                        courtNameSearchTerm={courtNameSearchTerm}
+                        setCourtNameSearchTerm={setCourtNameSearchTerm}
+                        filteredCourts={filteredCourts}
+                        filingYear={filingYear}
+                        setFilingYear={setFilingYear}
+                        caseType={caseType}
+                        setCaseType={setCaseType}
+                        caseTypeSearchTerm={caseTypeSearchTerm}
+                        setCaseTypeSearchTerm={setCaseTypeSearchTerm}
+                        getYears={getYears}
+                        errors={errors}
+                        loading={loading}
+                        isDarkTheme={isDarkTheme}
+                        onReset={handleResetCaseNumber}
+                        fetchingCourts={fetchingCourts}
+                      />
+                    ) : (
+                      <ReferenceNumberForm
+                        selectedCourt={selectedCourt}
+                        setSelectedCourt={setSelectedCourt}
+                        courtSearchTerm={courtSearchTerm}
+                        setCourtSearchTerm={setCourtSearchTerm}
+                        courtLevels={courtLevels}
+                        referenceNumber={referenceNumber}
+                        setReferenceNumber={setReferenceNumber}
+                        errors={errors}
+                        loading={loading}
+                        apiLoading={apiLoading}
+                        isDarkTheme={isDarkTheme}
+                        onReset={handleResetReferenceNumber}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-        
-        <div className="mb-5">
-          <div className={`flex gap-2 justify-center border-b ${isDarkTheme ? 'border-slate-700' : 'border-slate-200'} flex-wrap`}>
-            <button
-              onClick={() => setActiveTab('primary')}
-              className={`px-6 py-3 text-md font-medium transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'primary'
-                  ? `border-b-2 border-rose-500 ${isDarkTheme ? 'text-rose-400' : 'text-rose-600'}`
-                  : `${isDarkTheme ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'}`
-              }`}
-            >
-              <Fa.FaBalanceScale />
-              Case From Primary Court
-            </button>
-            <button
-              onClick={() => setActiveTab('other')}
-              className={`px-6 py-3 text-md font-medium transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'other'
-                  ? `border-b-2 border-rose-500 ${isDarkTheme ? 'text-rose-400' : 'text-rose-600'}`
-                  : `${isDarkTheme ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'}`
-              }`}
-            >
-              <Fa.FaBalanceScale />
-              Case From Other Courts
-            </button>
-            <button
-              onClick={() => setActiveTab('ref_no')}
-              className={`px-6 py-3 text-md font-medium transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'ref_no'
-                  ? `border-b-2 border-rose-500 ${isDarkTheme ? 'text-rose-400' : 'text-rose-600'}`
-                  : `${isDarkTheme ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'}`
-              }`}
-            >
-              <Fa.FaBalanceScale />
-              Search Case by Reference Number
-            </button>
-          </div>
-        </div>
-        
-        <div className={`rounded-xl p-6 backdrop-blur-sm border transition-colors duration-300 ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white/50 border-slate-200' }`}>
-          {activeTab === 'primary' && renderPrimaryCourt()}
-          {activeTab === 'other' && renderOtherCourts()}
-          {activeTab === 'ref_no' && renderByReferenceNumber()}
+
+        {/* Right Column */}
+        <div className="w-full lg:w-[50%] xl:w-[50%] 2xl:w-[60%]">
+          <SideLinks isDarkTheme={isDarkTheme} />
         </div>
       </div>
+
+      <ResultsModal
+        isOpen={showResultsModal}
+        onClose={closeResultsModal}
+        cases={filteredCases}
+        loading={loading || apiLoading}
+        isDarkTheme={isDarkTheme}
+      />
     </div>
   );
 }

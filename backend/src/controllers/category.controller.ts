@@ -36,7 +36,6 @@ export const getCategoryById = async (req: Request, res: Response, next: NextFun
 export const getCategoryBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     const category = await categoryService.findBySlug(String(slug));
     res.json({ success: true, data: category });
   } catch (err: any) {
@@ -97,7 +96,6 @@ export const updateCategory = async (req: Request, res: Response, next: NextFunc
 export const updateCategoryBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     const validated = updateCategorySchema.parse(req.body);
     const category = await categoryService.updateBySlug(String(slug), validated);
     res.json({ success: true, data: category });
@@ -135,7 +133,6 @@ export const deleteCategory = async (req: Request, res: Response, next: NextFunc
 export const deleteCategoryBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     await categoryService.deleteBySlug(String(slug));
     res.json({ success: true, message: 'Category deleted successfully' });
   } catch (err: any) {
@@ -149,7 +146,6 @@ export const deleteCategoryBySlug = async (req: Request, res: Response, next: Ne
 export const getLinksByCategory = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     const links = await categoryService.getLinksByCategorySlug(String(slug));
     res.json({ success: true, data: links });
   } catch (err: any) {

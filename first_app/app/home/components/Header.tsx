@@ -18,15 +18,15 @@ export default function Header({
         <div className="flex flex-wrap items-center gap-3">
         <div className="flex-1 flex-wrap justify-center items-center gap-4 text-sm text-white">
             <span className="inline-flex items-center gap-2 me-5">
-              <Fa.FaPhone className="w-4 h-4 text-green-500" />
+              <Fa.FaPhone className="w-4 h-4 text-yellow-400" />
               Toll-Free: <strong>0800 750 247</strong>
             </span>
             <span className="inline-flex items-center gap-2 me-5">
-              <Fa.FaEnvelope className="w-4 h-4 text-green-500" />
+              <Fa.FaEnvelope className="w-4 h-4 text-yellow-400" />
               Email: <strong>info@judiciary.go.tz</strong>
             </span>
             <span className="inline-flex items-center gap-2">
-              <Fa.FaWhatsapp className="w-4 h-4 text-green-500" />
+              <Fa.FaWhatsapp className="w-4 h-4 text-yellow-400" />
               WhatsApp: <strong>0752 500 400</strong>
             </span>
           </div>

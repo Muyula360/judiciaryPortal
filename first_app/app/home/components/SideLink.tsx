@@ -22,7 +22,7 @@ export default function SideLinks({
   categorySlug,
   limit = 10,
   showExternalOnly = true,
-  maxHeight = 'h-[400px]',
+  maxHeight = 'h-[320px]',
   searchQuery: externalSearchQuery = '',
   setSearchQuery: externalSetSearchQuery,
 }: SideLinksProps) {

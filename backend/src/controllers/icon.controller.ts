@@ -42,7 +42,6 @@ export const getIconById = async (req: Request, res: Response, next: NextFunctio
 export const getIconByName = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.params;
-    // ✅ Ensure name is a string
     const icon = await iconService.findByName(String(name));
     res.json({ success: true, data: icon });
   } catch (err: any) {
@@ -134,7 +133,6 @@ export const deleteIcon = async (req: Request, res: Response, next: NextFunction
 export const deleteIconByName = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.params;
-    // ✅ Ensure name is a string
     await iconService.deleteByName(String(name));
     res.json({ success: true, message: 'Icon deleted successfully' });
   } catch (err: any) {

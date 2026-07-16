@@ -1,11 +1,10 @@
-// src/controllers/link.controller.ts
+
 import { Request, Response, NextFunction } from 'express';
 import { LinkService } from '../services/link.service';
 import { z, ZodError } from 'zod';
 
 const linkService = new LinkService();
 
-// Validation Schemas
 const linkSchema = z.object({
   name: z.string().min(1),
   url: z.string().url(),
@@ -18,7 +17,6 @@ const linkSchema = z.object({
 
 const updateLinkSchema = linkSchema.partial();
 
-// Helper function for Zod errors
 const handleZodError = (err: ZodError) => {
   return err.issues.map((issue) => ({
     path: issue.path.join('.'),
@@ -26,7 +24,6 @@ const handleZodError = (err: ZodError) => {
   }));
 };
 
-// ============= GET ALL LINKS =============
 export const getLinks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { categoryId, permit, search } = req.query;
@@ -39,11 +36,9 @@ export const getLinks = async (req: Request, res: Response, next: NextFunction) 
   } catch (err) { next(err); }
 };
 
-// ============= GET LINKS BY CATEGORY SLUG =============
 export const getLinksByCategory = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     const links = await linkService.findAllByCategorySlug(String(slug));
     res.json({ success: true, data: links });
   } catch (err: any) {
@@ -57,11 +52,9 @@ export const getLinksByCategory = async (req: Request, res: Response, next: Next
   }
 };
 
-// ============= GET LINK BY SLUG =============
 export const getLinkBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     const link = await linkService.findBySlug(String(slug));
     res.json({ success: true, data: link });
   } catch (err: any) {
@@ -75,11 +68,9 @@ export const getLinkBySlug = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// ============= GET LINKS BY PERMIT =============
 export const getLinksByPermit = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { permit } = req.params;
-    // ✅ Ensure permit is a string
     const permitValue = String(permit);
     if (!['internal', 'external'].includes(permitValue)) {
       return res.status(400).json({
@@ -92,7 +83,6 @@ export const getLinksByPermit = async (req: Request, res: Response, next: NextFu
   } catch (err) { next(err); }
 };
 
-// ============= GET INTERNAL LINKS =============
 export const getInternalLinks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const links = await linkService.findAllInternal();
@@ -100,7 +90,6 @@ export const getInternalLinks = async (req: Request, res: Response, next: NextFu
   } catch (err) { next(err); }
 };
 
-// ============= GET EXTERNAL LINKS =============
 export const getExternalLinks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const links = await linkService.findAllExternal();
@@ -108,7 +97,6 @@ export const getExternalLinks = async (req: Request, res: Response, next: NextFu
   } catch (err) { next(err); }
 };
 
-// ============= CREATE LINK =============
 export const createLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validated = linkSchema.parse(req.body);
@@ -129,7 +117,6 @@ export const createLink = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// ============= UPDATE LINK BY ID =============
 export const updateLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -154,11 +141,9 @@ export const updateLink = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// ============= UPDATE LINK BY SLUG =============
 export const updateLinkBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     const validated = updateLinkSchema.parse(req.body);
     const link = await linkService.updateBySlug(String(slug), validated);
     res.json({ success: true, data: link });
@@ -180,7 +165,6 @@ export const updateLinkBySlug = async (req: Request, res: Response, next: NextFu
   }
 };
 
-// ============= DELETE LINK BY ID =============
 export const deleteLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -197,11 +181,9 @@ export const deleteLink = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// ============= DELETE LINK BY SLUG =============
 export const deleteLinkBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
-    // ✅ Ensure slug is a string
     await linkService.deleteBySlug(String(slug));
     res.json({ success: true, message: 'Link deleted successfully' });
   } catch (err: any) {

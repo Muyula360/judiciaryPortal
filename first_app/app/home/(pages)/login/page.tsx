@@ -3,74 +3,128 @@
 import { useState } from 'react';
 import { useLogin } from '@/hooks/useAuth';
 import Link from 'next/link';
+import TextInput from '@/app/components/TextInput';
+import FormButtons from '@/app/components/FormButtons';
+import { useTheme } from '@/app/context/ThemeContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const login = useLogin();
+  const { isDarkTheme } = useTheme();
+
+  const validateEmail = (value: string) => {
+    if (!value) {
+      setEmailError('Email is required');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
+
+  const validatePassword = (value: string) => {
+    if (!value) {
+      setPasswordError('Password is required');
+      return false;
+    }
+    setPasswordError('');
+    return true;
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (emailError) validateEmail(value);
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (passwordError) validatePassword(value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    
+    if (isEmailValid && isPasswordValid) {
       login.mutate({ email, password, redirectTo: '/staff_portal' });
+    }
+  };
+
+  const handleReset = () => {
+    setEmail('');
+    setPassword('');
+    setEmailError('');
+    setPasswordError('');
   };
 
   return (
-    <div className="max-w-md m-auto mt-32 w-full space-y-8 p-10 bg-white rounded-lg shadow">
-      <h2 className="text-3xl font-bold text-center">Sign In</h2>
+    <div className={`max-w-md m-auto mt-28 w-full space-y-8 p-10 rounded-lg shadow-lg transition-colors duration-300 ${
+                isDarkTheme 
+                  ? 'bg-slate-900/50 border-slate-700/50 ' 
+                  : 'bg-white border-slate-200/80'
+              }`}>
+      <h2 className={`text-2xl font-bold text-center text-gray-900 dark:text-white ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+        Sign In
+      </h2>
+      
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            placeholder="admin@judiciary.go.tz"
-          />
-        </div>
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            placeholder="••••••••"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={login.isPending}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-        >
-          {login.isPending ? 'Logging in...' : 'Login'}
-        </button>
+        <TextInput
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          label="Email"
+          placeholder="admin@judiciary.go.tz"
+          required
+          error={emailError}
+          isDarkTheme={isDarkTheme}
+          autoComplete="email"
+          icon={null}
+          className="w-full"
+        />
+
+        <TextInput
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+          label="Password"
+          placeholder="••••••••"
+          required
+          error={passwordError}
+          isDarkTheme={isDarkTheme}
+          autoComplete="current-password"
+          icon={null}
+          className="w-full"
+        />
+
+        <FormButtons
+          searchLabel={login.isPending ? 'Logging in...' : 'Login'}
+          resetLabel="Clear"
+          isDarkTheme={isDarkTheme}
+          onSearch={() => handleSubmit(new Event('submit') as any)}
+          onReset={handleReset}
+          isLoading={login.isPending}
+          showIcons={false}
+          searchClassName="w-full"
+          showReset={false}
+        />
+
         {login.error && (
-          <p className="text-red-500 py-2 text-sm">
-            {(login.error as any)?.response?.data?.message || 
-             login.error.message || 
-             'Incorrect credentials. Please try again.'}
-          </p>
+            <p className="text-red-600 dark:text-red-400 text-sm text-center mt-0">
+               'Incorrect credentials. Please try again.'
+            </p>
         )}
-        <p className="text-center">
-          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+
+        <div className="flex flex-col items-center gap-2 pt-1">
+          <Link 
+            href="/forgot-password" 
+            className="text-md text-blue-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:underline transition-colors"
+          >
             Forgot Password?
           </Link>
-        </p>
-        {/* <p className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-        </p> */}
+        </div>
       </form>
     </div>
   );
