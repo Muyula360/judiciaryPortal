@@ -61,6 +61,10 @@ export default function SideLinks({
 
   const currentSearchQuery = externalSearchQuery || internalSearchQuery;
 
+  // Separate internal and external links
+  const internalLinks = filteredLinks.filter(link => isInternalLink(link.url));
+  const externalLinks = filteredLinks.filter(link => !isInternalLink(link.url));
+
   if (loading) {
     return (
       <section className={`px-3 sm:px-0 lg:px-0 pt-6 pb-3 ${className}`}>
@@ -92,7 +96,6 @@ export default function SideLinks({
     );
   }
 
-
   if (error) {
     return (
       <section className={`px-3 sm:px-0 lg:px-0 pt-6 pb-3 ${className}`}>
@@ -119,25 +122,38 @@ export default function SideLinks({
   }
 
   return (
-    <section className={`px-3 sm:px-0 lg:px-0 pt-6 pb-3 ${className}`}>
-      <div className="mb-4">
-        <div className="relative items-center justify-center m-auto">
-          <Fa.FaSearch className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
-            isDarkTheme ? 'text-slate-400' : 'text-slate-400'
-          }`} />
-          <input
-            type="text"
-            placeholder="Search system..."
-            value={currentSearchQuery}
-            onChange={handleSearchChange}
-            className={`w-90 pl-10 pr-4 py-2 rounded-lg text-sm transition-all duration-300 ${
-              isDarkTheme
-                ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-rose-500 focus:ring-rose-500/20'
-                : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-rose-400 focus:ring-rose-400/20'
-            } border focus:outline-none focus:ring-2`}
-          />
+    <section className={`px-3 sm:px-0 lg:px-0 pt-3 pb-3 ${className}`}>
+   <div className="mb-3 relative items-center justify-center m-auto">
+        <div className="relative items-center justify-center m-auto flex gap-4">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Fa.FaSearch className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+              isDarkTheme ? 'text-slate-400' : 'text-slate-400'
+            }`} />
+            <input
+              type="text"
+              placeholder="Search system..."
+              value={currentSearchQuery}
+              onChange={handleSearchChange}
+              className={`w-11/12 pl-10 pr-4 py-2 rounded-lg text-sm transition-all duration-300 ${
+                isDarkTheme
+                  ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-rose-500 focus:ring-rose-500/20'
+                  : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-rose-400 focus:ring-rose-400/20'
+              } border focus:outline-none focus:ring-2`}
+            />
+          </div>
+
+          {/* Home Icon Button - Now at the end (right side) */}
+          <Link
+            href="/"
+            title="Go to Home"
+            className="flex items-center justify-center transition-transform duration-200 hover:scale-110 flex-shrink-0"
+          >
+            <Fa.FaHome className="w-12 h-13 pb-3 pe-2" style={{ color: '#ea580c' }} />
+          </Link>
         </div>
       </div>
+
 
       <div className={`overflow-y-auto pr-2 pt-1 pe-2 scrollbar-thin ${maxHeight}`}>
         {filteredLinks.length === 0 ? (
@@ -153,80 +169,130 @@ export default function SideLinks({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {filteredLinks.map((link) => {
-              const isInternal = isInternalLink(link.url);
-              const href = link.url;
-              const key = link.id || link.slug || `${link.name}-${link.categoryId}`;
+            {internalLinks.length > 0 && (
+              <>
+                {internalLinks.map((link) => {
+                  const isInternal = isInternalLink(link.url);
+                  const href = link.url;
+                  const key = link.id || link.slug || `${link.name}-${link.categoryId}`;
 
-              const cardContent = (
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#ea580c15' }}>
-                    {renderIcon(link.iconName, 'w-5 h-5', '#ea580c')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-sm font-semibold truncate ${
+                  const cardContent = (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#ea580c15' }}>
+                        {renderIcon(link.iconName, 'w-5 h-5', '#ea580c')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-sm font-semibold truncate ${
+                            isDarkTheme 
+                              ? 'text-slate-200 group-hover:text-rose-400' 
+                              : 'text-slate-800 group-hover:text-rose-600'
+                          }`}>
+                            {link.name}
+                          </span>
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            link.status === 'online' ? 'bg-emerald-500' : 'bg-amber-500'
+                          } animate-pulse-subtle`} 
+                          title={link.status} />
+                        </div>
+                        <p className={`text-xs truncate mt-0.5 ${
+                          isDarkTheme 
+                            ? 'text-slate-500 group-hover:text-slate-400' 
+                            : 'text-slate-500 group-hover:text-slate-700'
+                        }`}>
+                          {link.desc}
+                        </p>
+                      </div>
+                      <Fa.FaArrowRight className={`w-3 h-3 transition-all shrink-0 mt-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
                         isDarkTheme 
-                          ? 'text-slate-200 group-hover:text-rose-400' 
-                          : 'text-slate-800 group-hover:text-rose-600'
-                      }`}>
-                        {link.name}
-                      </span>
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${
-                        link.status === 'online' ? 'bg-emerald-500' : 'bg-amber-500'
-                      } animate-pulse-subtle`} 
-                      title={link.status} />
+                          ? 'text-slate-400 group-hover:text-rose-400' 
+                          : 'text-slate-400 group-hover:text-rose-500'
+                      }`} />
                     </div>
-                    <p className={`text-xs truncate mt-0.5 ${
-                      isDarkTheme 
-                        ? 'text-slate-500 group-hover:text-slate-400' 
-                        : 'text-slate-500 group-hover:text-slate-700'
-                    }`}>
-                      {link.desc}
-                    </p>
-                  </div>
-                  {isInternal ? (
-                    <Fa.FaArrowRight className={`w-3 h-3 transition-all shrink-0 mt-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
-                      isDarkTheme 
-                        ? 'text-slate-400 group-hover:text-rose-400' 
-                        : 'text-slate-400 group-hover:text-rose-500'
-                    }`} />
-                  ) : (
-                    <Fa.FaExternalLinkAlt className={`w-3 h-3 transition-all shrink-0 mt-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
-                      isDarkTheme 
-                        ? 'text-slate-400 group-hover:text-rose-400' 
-                        : 'text-slate-400 group-hover:text-rose-500'
-                    }`} />
-                  )}
-                </div>
-              );
+                  );
 
-              const commonClasses = `group block rounded-lg py-2 px-4 border transition-all duration-300 hover:-translate-y-1 ${
-                isDarkTheme
-                  ? 'bg-slate-900 border-slate-800 hover:border-rose-500 hover:shadow-xl hover:shadow-rose-500/10'
-                  : 'bg-white border-slate-300 hover:border-rose-400 hover:shadow-xl hover:shadow-rose-500/10'
-              }`;
+                  const commonClasses = `group block rounded-lg py-2 px-4 border transition-all duration-300 hover:-translate-y-1 ${
+                    isDarkTheme
+                      ? 'bg-slate-900 border-slate-800 hover:border-rose-500 hover:shadow-xl hover:shadow-rose-500/10'
+                      : 'bg-white border-slate-300 hover:border-rose-400 hover:shadow-xl hover:shadow-rose-500/10'
+                  }`;
 
-              return isInternal ? (
-                <Link
-                  key={key}
-                  href={href}
-                  className={commonClasses}
-                >
-                  {cardContent}
-                </Link>
-              ) : (
-                <a
-                  key={key}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={commonClasses}
-                >
-                  {cardContent}
-                </a>
-              );
-            })}
+                  return (
+                    <Link key={key} href={href} className={commonClasses}>
+                      {cardContent}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
+
+            {internalLinks.length > 0 && externalLinks.length > 0 && (
+              <div className="col-span-full my-3">
+                <hr className={`${isDarkTheme ? 'border-slate-700' : 'border-gray-200'}`} />
+              </div>
+            )}
+
+            {externalLinks.length > 0 && (
+              <>
+                {externalLinks.map((link) => {
+                  const href = link.url;
+                  const key = link.id || link.slug || `${link.name}-${link.categoryId}`;
+
+                  const cardContent = (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#ea580c15' }}>
+                        {renderIcon(link.iconName, 'w-5 h-5', '#ea580c')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-sm font-semibold truncate ${
+                            isDarkTheme 
+                              ? 'text-slate-200 group-hover:text-rose-400' 
+                              : 'text-slate-800 group-hover:text-rose-600'
+                          }`}>
+                            {link.name}
+                          </span>
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            link.status === 'online' ? 'bg-emerald-500' : 'bg-amber-500'
+                          } animate-pulse-subtle`} 
+                          title={link.status} />
+                        </div>
+                        <p className={`text-xs truncate mt-0.5 ${
+                          isDarkTheme 
+                            ? 'text-slate-500 group-hover:text-slate-400' 
+                            : 'text-slate-500 group-hover:text-slate-700'
+                        }`}>
+                          {link.desc}
+                        </p>
+                      </div>
+                      <Fa.FaExternalLinkAlt className={`w-3 h-3 transition-all shrink-0 mt-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
+                        isDarkTheme 
+                          ? 'text-slate-400 group-hover:text-rose-400' 
+                          : 'text-slate-400 group-hover:text-rose-500'
+                      }`} />
+                    </div>
+                  );
+
+                  const commonClasses = `group block rounded-lg py-2 px-4 border transition-all duration-300 hover:-translate-y-1 ${
+                    isDarkTheme
+                      ? 'bg-slate-900 border-slate-800 hover:border-rose-500 hover:shadow-xl hover:shadow-rose-500/10'
+                      : 'bg-white border-slate-300 hover:border-rose-400 hover:shadow-xl hover:shadow-rose-500/10'
+                  }`;
+
+                  return (
+                    <a
+                      key={key}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={commonClasses}
+                    >
+                      {cardContent}
+                    </a>
+                  );
+                })}
+              </>
+            )}
           </div>
         )}
       </div>

@@ -42,7 +42,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5001/api
 
 # .env.local
 
-# API Base URLs
+# API Base URL
 NEXT_PUBLIC_API_BASE_URL=https://cms.judiciary.go.tz/api/JotCMS/portal
 
 # Case Fetch Endpoints
@@ -56,3 +56,7 @@ NEXT_PUBLIC_API_COURTS=${NEXT_PUBLIC_API_BASE_URL}/courts
 NEXT_PUBLIC_API_PRIMARY_CASE_TYPES=${NEXT_PUBLIC_API_BASE_URL}/primary_court_case_type
 NEXT_PUBLIC_API_OTHER_CASE_TYPES=${NEXT_PUBLIC_API_BASE_URL}/case-subtypes
 NEXT_PUBLIC_API_CAUSE_LIST=${NEXT_PUBLIC_API_BASE_URL}/causelist/bycourtname
+
+# News API
+NEXT_PUBLIC_NEWS_API_URL=https://www.judiciary.go.tz/api/newsupdates
+NEXT_PUBLIC_NEWS_GET_ALL=${NEXT_PUBLIC_NEWS_API_URL}/getAllNews

@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "Permit" AS ENUM ('internal', 'external');
 
@@ -60,55 +57,33 @@ CREATE TABLE "Link" (
 );
 
 -- CreateTable
-CREATE TABLE "case_details" (
+CREATE TABLE "visits" (
     "id" SERIAL NOT NULL,
-    "case_reference" VARCHAR(50),
-    "case_number" VARCHAR(20),
-    "next_stage_date" DATE,
-    "next_stage" VARCHAR(50),
-    "filing_date" DATE,
-    "case_parties" TEXT,
-    "judge" VARCHAR(200),
-    "court_level" VARCHAR(50),
-    "court" VARCHAR(100),
-    "case_subtype" VARCHAR(100),
-    "case_status" VARCHAR(20),
-    "decided_by" VARCHAR(200),
-    "decision_date" DATE,
-    "mediator_name" VARCHAR(200),
-    "mediation_close_status" VARCHAR(50),
-    "assignment_status" VARCHAR(20),
-    "panel_assignment" TEXT,
-    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    "session_id" TEXT NOT NULL,
+    "ip_address" TEXT,
+    "user_agent" TEXT,
+    "page" TEXT,
+    "referer" TEXT,
+    "visited_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "case_details_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "visits_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "primary_courts" (
+CREATE TABLE "visit_stats" (
     "id" SERIAL NOT NULL,
-    "namba_ya_shauri_ya_marejeo" VARCHAR(100),
-    "mahakama" VARCHAR(200),
-    "namba_ya_shauri" VARCHAR(50),
-    "mwaka_wa_shauri_kufungulilwa" INTEGER,
-    "aina_ya_shauri" VARCHAR(50),
-    "wadaawa" TEXT,
-    "wilaya" VARCHAR(100),
-    "kanda" VARCHAR(100),
-    "hakimu" VARCHAR(200),
-    "status" VARCHAR(20),
-    "hali_ya_muonekano" VARCHAR(50),
-    "umri_wa_shauri" INTEGER,
-    "backlog_status" VARCHAR(20),
-    "tarehe_ya_kufungua_shauri" DATE,
-    "tarehe_ya_kuisha_shauri" DATE,
-    "mwaka_wa_shauri_kuisha" INTEGER,
-    "mwezi_wa_shauri_kuisha" INTEGER,
-    "time_taken" INTEGER,
-    "created_at" TIMESTAMP(6),
-    "updated_at" TIMESTAMP(6),
+    "date" TIMESTAMP(3) NOT NULL,
+    "daily" INTEGER NOT NULL DEFAULT 0,
+    "weekly" INTEGER NOT NULL DEFAULT 0,
+    "monthly" INTEGER NOT NULL DEFAULT 0,
+    "yearly" INTEGER NOT NULL DEFAULT 0,
+    "total" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "primary_courts_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "visit_stats_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -139,31 +114,16 @@ CREATE INDEX "Link_permit_idx" ON "Link"("permit");
 CREATE UNIQUE INDEX "Link_name_categoryId_key" ON "Link"("name", "categoryId");
 
 -- CreateIndex
-CREATE INDEX "idx_case_number" ON "case_details"("case_number");
+CREATE UNIQUE INDEX "visits_session_id_key" ON "visits"("session_id");
 
 -- CreateIndex
-CREATE INDEX "idx_case_reference" ON "case_details"("case_reference");
+CREATE INDEX "visits_session_id_idx" ON "visits"("session_id");
 
 -- CreateIndex
-CREATE INDEX "idx_case_status" ON "case_details"("case_status");
+CREATE INDEX "visits_visited_at_idx" ON "visits"("visited_at");
 
 -- CreateIndex
-CREATE INDEX "idx_court" ON "case_details"("court");
-
--- CreateIndex
-CREATE INDEX "idx_primary_case_number" ON "primary_courts"("namba_ya_shauri");
-
--- CreateIndex
-CREATE INDEX "idx_primary_case_reference" ON "primary_courts"("namba_ya_shauri_ya_marejeo");
-
--- CreateIndex
-CREATE INDEX "idx_primary_court" ON "primary_courts"("mahakama");
-
--- CreateIndex
-CREATE INDEX "idx_primary_filing_date" ON "primary_courts"("tarehe_ya_kufungua_shauri");
-
--- CreateIndex
-CREATE INDEX "idx_primary_status" ON "primary_courts"("status");
+CREATE UNIQUE INDEX "visit_stats_date_key" ON "visit_stats"("date");
 
 -- AddForeignKey
 ALTER TABLE "Category" ADD CONSTRAINT "Category_iconName_fkey" FOREIGN KEY ("iconName") REFERENCES "Icon"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -173,4 +133,3 @@ ALTER TABLE "Link" ADD CONSTRAINT "Link_categoryId_fkey" FOREIGN KEY ("categoryI
 
 -- AddForeignKey
 ALTER TABLE "Link" ADD CONSTRAINT "Link_iconName_fkey" FOREIGN KEY ("iconName") REFERENCES "Icon"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
-

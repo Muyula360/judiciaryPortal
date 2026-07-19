@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +8,23 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ============================================================
+// ENUMS
+// ============================================================
+enum Permit {
+  internal
+  external
+}
+
+enum Status {
+  online
+  degraded
+}
+
+// ============================================================
+// MODELS
+// ============================================================
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -60,70 +79,36 @@ model Link {
   @@index([permit])
 }
 
-model CaseDetail {
-  id                   Int       @id @default(autoincrement())
-  caseReference        String?   @map("case_reference") @db.VarChar(50)
-  caseNumber           String?   @map("case_number") @db.VarChar(20)
-  nextStageDate        DateTime? @map("next_stage_date") @db.Date
-  nextStage            String?   @map("next_stage") @db.VarChar(50)
-  filingDate           DateTime? @map("filing_date") @db.Date
-  caseParties          String?   @map("case_parties")
-  judge                String?   @db.VarChar(200)
-  courtLevel           String?   @map("court_level") @db.VarChar(50)
-  court                String?   @db.VarChar(100)
-  caseSubtype          String?   @map("case_subtype") @db.VarChar(100)
-  caseStatus           String?   @map("case_status") @db.VarChar(20)
-  decidedBy            String?   @map("decided_by") @db.VarChar(200)
-  decisionDate         DateTime? @map("decision_date") @db.Date
-  mediatorName         String?   @map("mediator_name") @db.VarChar(200)
-  mediationCloseStatus String?   @map("mediation_close_status") @db.VarChar(50)
-  assignmentStatus     String?   @map("assignment_status") @db.VarChar(20)
-  panelAssignment      String?   @map("panel_assignment")
-  createdAt            DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+// ============================================================
+// VISIT TRACKING
+// ============================================================
 
-  @@index([caseNumber], map: "idx_case_number")
-  @@index([caseReference], map: "idx_case_reference")
-  @@index([caseStatus], map: "idx_case_status")
-  @@index([court], map: "idx_court")
-  @@map("case_details")
+model Visit {
+  id        Int      @id @default(autoincrement())
+  sessionId String   @unique @map("session_id")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  page      String?  @map("page")
+  referer   String?  @map("referer")
+  visitedAt DateTime @default(now()) @map("visited_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([sessionId])
+  @@index([visitedAt])
+  @@map("visits")
 }
 
-model primary_courts {
-  id                           Int       @id @default(autoincrement())
-  namba_ya_shauri_ya_marejeo   String?   @db.VarChar(100)
-  mahakama                     String?   @db.VarChar(200)
-  namba_ya_shauri              String?   @db.VarChar(50)
-  mwaka_wa_shauri_kufungulilwa Int?
-  aina_ya_shauri               String?   @db.VarChar(50)
-  wadaawa                      String?
-  wilaya                       String?   @db.VarChar(100)
-  kanda                        String?   @db.VarChar(100)
-  hakimu                       String?   @db.VarChar(200)
-  status                       String?   @db.VarChar(20)
-  hali_ya_muonekano            String?   @db.VarChar(50)
-  umri_wa_shauri               Int?
-  backlog_status               String?   @db.VarChar(20)
-  tarehe_ya_kufungua_shauri    DateTime? @db.Date
-  tarehe_ya_kuisha_shauri      DateTime? @db.Date
-  mwaka_wa_shauri_kuisha       Int?
-  mwezi_wa_shauri_kuisha       Int?
-  time_taken                   Int?
-  created_at                   DateTime? @db.Timestamp(6)
-  updated_at                   DateTime? @db.Timestamp(6)
+model VisitStats {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique @map("date")
+  daily     Int      @default(0) @map("daily")
+  weekly    Int      @default(0) @map("weekly")
+  monthly   Int      @default(0) @map("monthly")
+  yearly    Int      @default(0) @map("yearly")
+  total     Int      @default(0) @map("total")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([namba_ya_shauri], map: "idx_primary_case_number")
-  @@index([namba_ya_shauri_ya_marejeo], map: "idx_primary_case_reference")
-  @@index([mahakama], map: "idx_primary_court")
-  @@index([tarehe_ya_kufungua_shauri], map: "idx_primary_filing_date")
-  @@index([status], map: "idx_primary_status")
-}
-
-enum Permit {
-  internal
-  external
-}
-
-enum Status {
-  online
-  degraded
+  @@map("visit_stats")
 }

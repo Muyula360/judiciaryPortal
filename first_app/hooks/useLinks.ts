@@ -43,18 +43,7 @@ export const DEFAULT_LINKS: LinkData[] = [
     status: 'online',
     permit: 'internal',
     categoryId: 0,
-  },
-  {
-    id: 0,
-    slug: 'home',
-    name: 'Home',
-    url: '/home',
-    desc: 'Judicial Portal landing home',
-    iconName: 'FaHome',
-    status: 'online',
-    permit: 'internal',
-    categoryId: 0,
-  },
+  }
 ];
 
 interface UseLinksOptions {

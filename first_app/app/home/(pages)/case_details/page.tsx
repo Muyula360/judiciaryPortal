@@ -12,6 +12,7 @@ import ReferenceNumberForm from './components/ReferenceNumberForm';
 import FormTabs from './components/FormTabs';
 import { useCaseFetch } from '@/hooks/useCaseDetails';
 import { useCaseDetails } from '@/hooks/useCauseList';
+import NewsSection from '../../components/NewsSection';
 
 interface Case {
   id: string;
@@ -242,7 +243,7 @@ export default function CauseList() {
   };
 
   return (
-    <div className="flex-grow px-5 sm:px-20 md:px-30 lg:px-40 xl:px-50 2xl:px-60 pt-6 sm:pt-8 md:pt-10 lg:pt-12 pb-3">
+    <div className="flex-grow px-5 sm:px-20 md:px-30 lg:px-40 xl:px-50 2xl:px-60 pt-4 sm:pt-4 md:pt-4 lg:pt-5 pb-3">
       <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-10 xl:gap-12">
         {/* Left Column */}
         <div className="w-full lg:w-[50%] xl:w-[50%] 2xl:w-[40%]">
@@ -329,9 +330,18 @@ export default function CauseList() {
 
         {/* Right Column */}
         <div className="w-full lg:w-[50%] xl:w-[50%] 2xl:w-[60%]">
-          <SideLinks isDarkTheme={isDarkTheme} />
+          <SideLinks 
+            isDarkTheme={isDarkTheme}
+            maxHeight="h-[400px]" 
+           />
         </div>
       </div>
+          <div className="mt-8">
+              <NewsSection 
+              limit={4} 
+              isDarkTheme={isDarkTheme} 
+              />
+            </div>
 
       <ResultsModal
         isOpen={showResultsModal}

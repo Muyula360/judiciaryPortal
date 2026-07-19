@@ -22,4 +22,8 @@ export const API_CONFIG = {
     'https://cms.judiciary.go.tz/api/JotCMS/portal/case-subtypes',
   CAUSE_LIST: process.env.NEXT_PUBLIC_API_CAUSE_LIST || 
     'https://cms.judiciary.go.tz/api/JotCMS/portal/causelist/bycourtname',
+
+
+NEWS_BASE_URL: process.env.NEXT_PUBLIC_NEWS_API_URL || 'https://www.judiciary.go.tz/api/newsupdates',
+  NEWS_GET_ALL: `${process.env.NEXT_PUBLIC_NEWS_API_URL || 'https://www.judiciary.go.tz/api/newsupdates'}/getAllNews`,
 };
