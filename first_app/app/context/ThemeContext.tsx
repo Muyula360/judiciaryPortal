@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 
 interface ThemeContextType {
   isDarkTheme: boolean;
@@ -18,21 +18,40 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isGridView, setIsGridView] = useState(true);
   const [mounted, setMounted] = useState(false);
+  
+  const isInitialized = useRef(false);
 
   useEffect(() => {
-    setMounted(true);
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    // Check localStorage for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     
+    // Check system preference if no saved preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Determine initial theme
+    let initialTheme = false; // default to light
     if (savedTheme === 'dark') {
-      setIsDarkTheme(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkTheme(false);
-      document.documentElement.classList.remove('dark');
-      if (!savedTheme) {
-        localStorage.setItem('theme', 'light');
-      }
+      initialTheme = true;
+    } else if (savedTheme === 'light') {
+      initialTheme = false;
+    } else if (prefersDark) {
+      initialTheme = true;
     }
+    
+    // Apply theme to document
+    if (initialTheme) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+    
+    setIsDarkTheme(initialTheme);
+    setMounted(true);
   }, []);
 
   const toggleTheme = () => {

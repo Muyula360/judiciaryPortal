@@ -1,4 +1,4 @@
-// app/hooks/useVisitTracking.ts
+
 import { useEffect, useRef } from 'react';
 import api from '@/lib/api';
 
@@ -10,11 +10,11 @@ export function useVisitTracking() {
 
     const trackVisit = async () => {
       try {
-        const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+        const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
         
-        let sessionId = localStorage.getItem('sessionId');
-        let sessionTimestamp = localStorage.getItem('sessionTimestamp');
-        let browserSessionId = sessionStorage.getItem('browserSessionId');
+        let sessionId = localStorage.getItem('sessionId'); 
+        const sessionTimestamp = localStorage.getItem('sessionTimestamp');
+        const browserSessionId = sessionStorage.getItem('browserSessionId');
         const now = Date.now();
 
         const isNewBrowserSession = !browserSessionId;
@@ -45,7 +45,6 @@ export function useVisitTracking() {
           },
         });
 
-        // ✅ Dispatch event to notify VisitsAnalytics component
         window.dispatchEvent(new CustomEvent('visitTracked'));
 
         sessionStorage.setItem('visitTracked', 'true');

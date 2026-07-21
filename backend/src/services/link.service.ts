@@ -1,4 +1,3 @@
-// src/services/link.service.ts
 import { Prisma, Link, Permit, Status } from '@prisma/client';
 import { prisma } from '../config/database';
 import { validateIconExists } from './icon.service';
@@ -13,7 +12,7 @@ export class LinkService {
           include: {
             icon: true,
           },
-          orderBy: { name: 'asc' },
+          orderBy: { id: 'asc' },
         },
       },
     });
@@ -28,7 +27,7 @@ export class LinkService {
         icon: true,
         category: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: { id: 'asc' },
     });
   }
 
@@ -292,7 +291,7 @@ export class LinkService {
         icon: true,
         category: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: { id: 'asc' },
     });
   }
 }

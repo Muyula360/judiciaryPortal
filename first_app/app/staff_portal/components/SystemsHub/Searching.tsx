@@ -6,7 +6,7 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 
 interface SearchingProps {
   searchQuery: string;
-  setSearchQuery: (query: string) => void;   // 👈 uncommented
+  setSearchQuery: (query: string) => void;
   isGridView: boolean;
   setIsGridView: (value: boolean) => void;
   isDarkTheme: boolean;
@@ -22,15 +22,9 @@ function Searching({
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const debouncedQuery = useDebounce(localQuery, 300);
 
-  // Update parent only after debounce
   useEffect(() => {
     setSearchQuery(debouncedQuery);
   }, [debouncedQuery, setSearchQuery]);
-
-  // Sync local state when prop changes externally (e.g., clear filter)
-  useEffect(() => {
-    setLocalQuery(searchQuery);
-  }, [searchQuery]);
 
   return (
     <section className="transition-colors duration-300 mb-3">

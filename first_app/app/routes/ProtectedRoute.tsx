@@ -1,25 +1,38 @@
+// app/routes/ProtectedRoute.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticatedState, setIsAuthenticatedState] = useState<boolean | null>(null);
+  const hasChecked = useRef(false);
 
   useEffect(() => {
-    setIsClient(true);
-    if (!isAuthenticated()) {
+    // ✅ Prevent multiple checks
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+
+    const authStatus = isAuthenticated();
+    setIsAuthenticatedState(authStatus);
+    
+    if (!authStatus) {
       router.push('/login');
     }
   }, [router]);
 
-  // Avoid rendering on the server to prevent flash of content
-  if (!isClient) return null;
+  // Loading state while checking authentication
+  if (isAuthenticatedState === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500"></div>
+      </div>
+    );
+  }
 
-  // Only render children if authenticated
-  if (!isAuthenticated()) return null;
+  if (!isAuthenticatedState) return null;
 
   return <>{children}</>;
 }

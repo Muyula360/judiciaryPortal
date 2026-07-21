@@ -11,7 +11,6 @@ export default function CardLinks() {
 
   return (
     <div className="flex-grow px-5 sm:px-20 md:px-30 lg:px-40 xl:px-50 2xl:px-60 pt-4 sm:pt-4 md:pt-4 lg:pt-6 pb-3">
-      {/* Stack on small screens, side-by-side on large */}
       <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-10 xl:gap-12">
         
         {/* Left Column - SideLinks */}

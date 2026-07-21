@@ -1,4 +1,3 @@
-// app/home/components/SideLink.tsx
 'use client';
 
 import Link from 'next/link';
@@ -125,7 +124,6 @@ export default function SideLinks({
     <section className={`px-3 sm:px-0 lg:px-0 pt-3 pb-3 ${className}`}>
    <div className="mb-3 relative items-center justify-center m-auto">
         <div className="relative items-center justify-center m-auto flex gap-4">
-          {/* Search Input */}
           <div className="relative flex-1">
             <Fa.FaSearch className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
               isDarkTheme ? 'text-slate-400' : 'text-slate-400'
@@ -143,7 +141,6 @@ export default function SideLinks({
             />
           </div>
 
-          {/* Home Icon Button - Now at the end (right side) */}
           <Link
             href="/"
             title="Go to Home"

@@ -1,5 +1,8 @@
+
 'use client';
-import * as XLSX from 'xlsx-js-style';
+
+import * as ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { Case } from '@/types';
 
 interface ExcelGeneratorProps {
@@ -12,7 +15,7 @@ interface ExcelGeneratorProps {
   endDate?: string;
 }
 
-export const generateExcel = ({
+export const generateExcel = async ({
   cases,
   selectedCourt,
   formatDate,
@@ -26,174 +29,149 @@ export const generateExcel = ({
     return;
   }
 
+  // Create workbook and worksheet
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Cause List');
+
+  worksheet.getColumn(1).width = 6;   
+  worksheet.getColumn(2).width = 50;  
+  worksheet.getColumn(3).width = 60;  
+  worksheet.getColumn(4).width = 35;  
+  worksheet.getColumn(5).width = 25; 
+  worksheet.getColumn(6).width = 15; 
+  worksheet.getColumn(7).width = 14;  
+  worksheet.getColumn(8).width = 22;  
+
+  // Helper to get case title
   const getCaseTitle = (caseItem: Case) => {
     return `${caseItem.caseTitle} (${caseItem.caseReference})`.trim();
   };
 
-  // Prepare data for Excel
-  const excelData = cases.map((caseItem, index) => ({
-    'SN': index + 1,
-    'Case Title': getCaseTitle(caseItem),
-    'Case Parties': caseItem.caseParties,
-    'Judge/Magistrate': caseItem.judgeName,
-    'Case Stage': caseItem.nextStage,
-    'Date': formatDate(caseItem.nextStageDate),
-    'Time': formatTime(caseItem.nextStageTime),
-    'Court Room': caseItem.courtRoomName,
-  }));
-
-  // Create workbook and worksheet
-  const wb = XLSX.utils.book_new();
-  
-  // Create a new worksheet with all data including headers
-  const ws = XLSX.utils.aoa_to_sheet([]);
-
-  // Prepare all rows including title, headers and data
-  const headers = ['SN', 'Case Title', 'Case Parties', 'Judge/Magistrate', 'Case Stage', 'Date', 'Time', 'Court Room'];
-  
-  // Build the complete data array
-  const allData = [
-    ['THE JUDICIARY OF TANZANIA'],  
-    [`${selectedCourt}`], 
-    [`Cause List From: ${startDate || 'N/A'}  To  ${endDate || 'N/A'}`],
-    headers,
-    ...excelData.map(item => [
-      item['SN'],
-      item['Case Title'],
-      item['Case Parties'],
-      item['Judge/Magistrate'],
-      item['Case Stage'],
-      item['Date'],
-      item['Time'],
-      item['Court Room']
-    ])
-  ];
-
-  // Add all data to sheet
-  XLSX.utils.sheet_add_aoa(ws, allData, { origin: 'A1' });
-
-  ws['!cols'] = [
-    { wch: 6 },   
-    { wch: 55 }, 
-    { wch: 60 }, 
-    { wch: 35 },  
-    { wch: 25 }, 
-    { wch: 15 }, 
-    { wch: 10 }, 
-    { wch: 18 }, 
-  ];
-
- // Merge title rows
-ws["!merges"] = [
-  { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-  { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
-  { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } },
-];
-
-
-// A1 - Judiciary
-ws["A1"].s = {
-  font: {
-    bold: true,
-    sz: 18,
-    name: "Helvetica",
-  },
-  alignment: {
-    horizontal: "center",
-    vertical: "center",
-  },
-};
-
-// A2 - Court
-ws["A2"].s = {
-  font: {
-    bold: true,
-    sz: 16,
-    color: { rgb: "C00000" },
-    name: "Helvetica",
-  },
-  alignment: {
-    horizontal: "center",
-    vertical: "center",
-  },
-};
-
-// A3 - Date Range
-ws["A3"].s = {
-  font: {
-    bold: true,
-    sz: 12,
-    name: "Helvetica",
-  },
-  alignment: {
-    horizontal: "center",
-    vertical: "center",
-  },
-};
-
-// Header row (A4:H4)
-for (let c = 0; c < 8; c++) {
-  const cell = XLSX.utils.encode_cell({ r: 3, c });
-
-  ws[cell].s = {
-    font: {
-      bold: true,
-      sz: 12,
-      color: { rgb: "FFFFFF" },
-      name: "Helvetica",
-    },
-    fill: {
-      patternType: "solid",
-      fgColor: { rgb: "C00000" },
-    },
-    alignment: {
-      horizontal: "center",
-      vertical: "center",
-      wrapText: true,
-    },
-    border: {
-      top: { style: "thin", color: { rgb: "FFFFFF" } },
-      bottom: { style: "thin", color: { rgb: "FFFFFF" } },
-      left: { style: "thin", color: { rgb: "FFFFFF" } },
-      right: { style: "thin", color: { rgb: "FFFFFF" } },
-    },
+  // Helper to safely get value
+  const safeString = (value: string | undefined | null): string => {
+    return value || 'N/A';
   };
-}
 
-// Style data rows
-const range = XLSX.utils.decode_range(ws["!ref"]!);
 
-for (let r = 4; r <= range.e.r; r++) {
-  for (let c = 0; c <= range.e.c; c++) {
-    const cell = XLSX.utils.encode_cell({ r, c });
+  const titleRow = worksheet.addRow(['THE JUDICIARY OF TANZANIA']);
+  worksheet.mergeCells(`A${titleRow.number}:H${titleRow.number}`);
+  titleRow.getCell(1).font = {
+    name: 'Helvetica',
+    size: 18,
+    bold: true,
+  };
+  titleRow.getCell(1).alignment = {
+    horizontal: 'center',
+    vertical: 'middle',
+  };
 
-    if (!ws[cell]) continue;
 
-    ws[cell].s = {
-      font: {
-        sz: 12,
-        name: "Helvetica",
-      },
-      alignment: {
-        vertical: "top",
-        wrapText: true,
-        horizontal: c === 0 ? "center" : "left",
-      },
-      border: {
-        top: { style: "thin", color: { rgb: "D9D9D9" } },
-        bottom: { style: "thin", color: { rgb: "D9D9D9" } },
-        left: { style: "thin", color: { rgb: "D9D9D9" } },
-        right: { style: "thin", color: { rgb: "D9D9D9" } },
-      },
+  const courtRow = worksheet.addRow([selectedCourt]);
+  worksheet.mergeCells(`A${courtRow.number}:H${courtRow.number}`);
+  courtRow.getCell(1).font = {
+    name: 'Helvetica',
+    size: 16,
+    bold: true,
+    color: { argb: 'FFC00000' },
+  };
+  courtRow.getCell(1).alignment = {
+    horizontal: 'center',
+    vertical: 'middle', 
+  };
+
+
+  const dateRow = worksheet.addRow([
+    `Cause List From: ${startDate || 'N/A'}  To  ${endDate || 'N/A'}`
+  ]);
+  worksheet.mergeCells(`A${dateRow.number}:H${dateRow.number}`);
+  dateRow.getCell(1).font = {
+    name: 'Helvetica',
+    size: 12,
+    bold: true,
+  };
+  dateRow.getCell(1).alignment = {
+    horizontal: 'center',
+    vertical: 'middle', 
+  };
+
+
+  const headerRow = worksheet.addRow([
+    'SN',
+    'Case Title',
+    'Case Parties',
+    'Judge/Magistrate',
+    'Case Stage',
+    'Date',
+    'Time',
+    'Court Room',
+  ]);
+
+  headerRow.eachCell((cell) => {
+    cell.font = {
+      name: 'Helvetica',
+      size: 12,
+      bold: true,
+      color: { argb: 'FFFFFFFF' },
     };
-  }
-}
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFC00000' },
+    };
+    cell.alignment = {
+      horizontal: 'center',
+      vertical: 'middle', 
+      wrapText: true,
+    };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      right: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+    };
+  });
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Cause List');
+  // ============ DATA ROWS ============
+  cases.forEach((caseItem, index) => {
+    const row = worksheet.addRow([
+      index + 1,
+      getCaseTitle(caseItem),
+      safeString(caseItem.caseParties),
+      safeString(caseItem.judgeName),
+      safeString(caseItem.nextStage),
+      formatDate(safeString(caseItem.nextStageDate)),
+      formatTime(safeString(caseItem.nextStageTime)),
+      safeString(caseItem.courtRoomName),
+    ]);
 
-  const courtName = selectedCourt;
+    // Style each cell in the data row
+    row.eachCell((cell, colNumber) => {
+      cell.font = {
+        name: 'Helvetica',
+        size: 12,
+      };
+      cell.alignment = {
+        vertical: 'top',
+        wrapText: true,
+        horizontal: colNumber === 1 ? 'center' : 'left',
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        bottom: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        left: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        right: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+      };
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+
+  const courtName = selectedCourt || 'All_Courts';
   const dateStr = new Date().toISOString().split('T')[0];
   const fileName = `Cause_List_${courtName.replace(/\s+/g, '_')}_${dateStr}.xlsx`;
 
-  XLSX.writeFile(wb, fileName);
+  saveAs(blob, fileName);
 };

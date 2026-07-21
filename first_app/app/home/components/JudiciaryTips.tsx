@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Fa from 'react-icons/fa';
 
 interface Tip {
@@ -239,14 +239,15 @@ export default function JudiciaryTips({
   const [currentYear, setCurrentYear] = useState('');
   const [monthlyTips, setMonthlyTips] = useState<Tip[]>([]);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
-  const [showAll, setShowAll] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [lastUpdate, setLastUpdate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // Function to generate monthly tips based on month and year
-  const generateMonthlyTips = (month: number, year: number) => {
+  // ✅ Refs to track initialization
+  const isInitialized = useRef(false);
+  const isFirstRender = useRef(true);
+
+  // ✅ Memoized functions
+  const generateMonthlyTips = useCallback((month: number, year: number) => {
     const seed = month + year * 12;
     const shuffled = [...judiciaryTips].sort((a, b) => {
       const hashA = (a.id * 31 + seed) % 100;
@@ -254,10 +255,9 @@ export default function JudiciaryTips({
       return hashA - hashB;
     });
     return shuffled.slice(0, 10);
-  };
+  }, []);
 
-  // Calculate countdown until next month
-  const calculateCountdown = () => {
+  const calculateCountdown = useCallback(() => {
     const now = new Date();
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     const diff = nextMonth.getTime() - now.getTime();
@@ -268,10 +268,9 @@ export default function JudiciaryTips({
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
     setCountdown({ days, hours, minutes, seconds });
-  };
+  }, []);
 
-  // Update tips function
-  const updateTips = () => {
+  const updateTips = useCallback(() => {
     const now = new Date();
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -286,61 +285,67 @@ export default function JudiciaryTips({
     const newTips = generateMonthlyTips(now.getMonth(), now.getFullYear());
     setMonthlyTips(newTips);
     setCurrentTipIndex(0);
-    setLastUpdate(`${currentMonthName} ${currentYearStr}`);
     setIsLoading(false);
     
-    // Store in localStorage
     try {
       localStorage.setItem('judiciary_tips_month', currentMonthName);
       localStorage.setItem('judiciary_tips_year', currentYearStr);
       localStorage.setItem('judiciary_tips_data', JSON.stringify(newTips));
-    } catch (e) {
-      // Ignore
+    } catch {
+      // Ignore storage errors
     }
-  };
+  }, [generateMonthlyTips]);
 
+  // ✅ Use a separate effect for initialization with useRef
   useEffect(() => {
-    try {
-      const savedMonth = localStorage.getItem('judiciary_tips_month');
-      const savedYear = localStorage.getItem('judiciary_tips_year');
-      const savedTips = localStorage.getItem('judiciary_tips_data');
-      
-      if (savedMonth && savedYear && savedTips) {
-        const now = new Date();
-        const monthNames = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        const currentMonthName = monthNames[now.getMonth()];
-        const currentYearStr = now.getFullYear().toString();
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    const initialize = () => {
+      try {
+        const savedMonth = localStorage.getItem('judiciary_tips_month');
+        const savedYear = localStorage.getItem('judiciary_tips_year');
+        const savedTips = localStorage.getItem('judiciary_tips_data');
         
-        if (savedMonth === currentMonthName && savedYear === currentYearStr) {
-          setCurrentMonth(currentMonthName);
-          setCurrentYear(currentYearStr);
-          setLastUpdate(`${currentMonthName} ${currentYearStr}`);
-          const parsedTips = JSON.parse(savedTips);
-          setMonthlyTips(parsedTips);
-          setIsLoading(false);
-          calculateCountdown();
-          return;
+        if (savedMonth && savedYear && savedTips) {
+          const now = new Date();
+          const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+          ];
+          const currentMonthName = monthNames[now.getMonth()];
+          const currentYearStr = now.getFullYear().toString();
+          
+          if (savedMonth === currentMonthName && savedYear === currentYearStr) {
+            const parsedTips = JSON.parse(savedTips);
+            // ✅ Batch all state updates
+            setCurrentMonth(currentMonthName);
+            setCurrentYear(currentYearStr);
+            setMonthlyTips(parsedTips);
+            setIsLoading(false);
+            calculateCountdown();
+            return;
+          }
         }
+      } catch {
+        // Ignore storage errors
       }
-    } catch (e) {
-      // Ignore
-    }
-    
-    updateTips();
-    calculateCountdown();
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
+      
+      updateTips();
       calculateCountdown();
-    }, 1000);
+    };
 
-    return () => clearInterval(interval);
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ COUNTDOWN TIMER
+  useEffect(() => {
+    const interval = setInterval(calculateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [calculateCountdown]);
+
+  // ✅ MONTH CHANGE CHECKER
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -358,36 +363,36 @@ export default function JudiciaryTips({
     }, 3600000);
 
     return () => clearInterval(interval);
-  }, [currentMonth, currentYear]);
+  }, [currentMonth, currentYear, updateTips, calculateCountdown]);
 
+  // ✅ All tips (no category filter)
+  const filteredTips = monthlyTips;
 
-  // Filter tips by category
-  const getFilteredTips = () => {
-    if (selectedCategory === 'All') {
-      return monthlyTips;
+  // ✅ RESET INDEX - Skips first render
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
-    return monthlyTips.filter(tip => tip.category === selectedCategory);
-  };
+    setCurrentTipIndex(0);
+  }, [filteredTips.length]);
 
-  const filteredTips = getFilteredTips();
-  const displayedTips = showAll ? filteredTips : filteredTips.slice(0, 5);
-
-  // Next tip for carousel
-  const nextTip = () => {
+  // ✅ NAVIGATION
+  const nextTip = useCallback(() => {
     if (filteredTips.length > 0) {
       setCurrentTipIndex((prev) => (prev + 1) % filteredTips.length);
     }
-  };
+  }, [filteredTips.length]);
 
-  const prevTip = () => {
+  const prevTip = useCallback(() => {
     if (filteredTips.length > 0) {
       setCurrentTipIndex((prev) => (prev - 1 + filteredTips.length) % filteredTips.length);
     }
-  };
+  }, [filteredTips.length]);
 
   const currentTip = filteredTips[currentTipIndex] || filteredTips[0];
 
-  // Auto-play carousel
+  // ✅ AUTO-PLAY
   useEffect(() => {
     if (filteredTips.length <= 1) return;
 
@@ -398,22 +403,7 @@ export default function JudiciaryTips({
     return () => clearInterval(autoPlayInterval);
   }, [filteredTips.length]);
 
-  // Reset to first tip when filtered tips change (category filter changes)
-  useEffect(() => {
-    setCurrentTipIndex(0);
-  }, [selectedCategory, filteredTips.length]);
-
-  // Format countdown display
-  const formatCountdown = () => {
-    const { days, hours, minutes, seconds } = countdown;
-    const parts = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0 || days > 0) parts.push(`${hours}h`);
-    if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`);
-    parts.push(`${seconds}s`);
-    return parts.join(' ');
-  };
-
+  // ✅ LOADING STATE
   if (isLoading) {
     return (
       <div className={`${className} animate-pulse`}>
@@ -428,8 +418,10 @@ export default function JudiciaryTips({
     );
   }
 
+  // ✅ MAIN RENDER
   return (
     <div className={`${className} pt-2`}>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className={`text-2xl font-bold flex items-center gap-2 ${isDarkTheme ? 'text-white' : 'text-gray-400'}`}>
@@ -442,6 +434,7 @@ export default function JudiciaryTips({
         </div>
       </div>
 
+      {/* Countdown Timer */}
       <div className={`mb-6 p-3 rounded-xl flex items-center justify-between ${
         isDarkTheme 
           ? 'bg-slate-900 border border-slate-800/50' 
@@ -454,7 +447,7 @@ export default function JudiciaryTips({
               Next Tips Update
             </p>
             <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-slate-950'}`}>
-              New tips will be available on the 1st of next month
+              New tips available on the 1st of next month
             </p>
           </div>
         </div>
@@ -498,9 +491,7 @@ export default function JudiciaryTips({
         </div>
       </div>
 
-
-
-      {/* Carousel - Auto Plays */}
+      {/* Carousel */}
       {filteredTips.length > 0 && (
         <div className={`rounded-xl p-6 mb-6 transition-all duration-300 ${
           isDarkTheme 
@@ -568,8 +559,6 @@ export default function JudiciaryTips({
           </div>
         </div>
       )}
-
- 
 
       {/* Footer */}
       <div className={`mt-6 pt-4 border-t ${

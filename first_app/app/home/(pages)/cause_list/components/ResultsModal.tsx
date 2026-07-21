@@ -48,7 +48,7 @@ export default function ResultsModal({
     return caseItem.caseTitle || `${caseItem.caseNumber}/${caseItem.caseYear}`;
   };
 
-  const getStageColor = (stage: string) => {
+  const getStageColor = (stage: string | undefined | null) => {
     const stageLower = stage?.toLowerCase() || '';
     if (stageLower.includes('mediation')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
     if (stageLower.includes('mention')) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
@@ -56,6 +56,10 @@ export default function ResultsModal({
     if (stageLower.includes('judgment')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
     if (stageLower.includes('appeal')) return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
     return 'bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300';
+  };
+
+  const safeString = (value: string | undefined | null): string => {
+    return value || 'N/A';
   };
 
   // Filter cases based on search term
@@ -83,9 +87,6 @@ export default function ResultsModal({
       );
     });
   })();
-
-  const hasResults = cases.length > 0 && !loading;
-  const hasFilteredResults = filteredCases.length > 0 && !loading;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -184,7 +185,7 @@ export default function ResultsModal({
             {/* Search Results Count */}
             {searchTerm && (
               <div className={`mt-2 text-sm ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                Found {filteredCases.length} case(s) matching "{searchTerm}"
+                Found {filteredCases.length} case(s) matching &quot;{searchTerm}&quot;
               </div>
             )}
           </div>
@@ -213,7 +214,7 @@ export default function ResultsModal({
                 No matching cases
               </h3>
               <p className={`text-sm ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>
-                No cases found matching "{searchTerm}"
+                No cases found matching &quot;{searchTerm}&quot;
               </p>
             </div>
           ) : (
@@ -261,7 +262,7 @@ export default function ResultsModal({
                     <tr key={caseItem.id} className={`transition-all duration-300 ${
                       isDarkTheme ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50'
                     }`}>
-                      {/* Case Title - Wider */}
+
                       <td className="px-2 py-3 w-[8%]">
                         <div>
                           <span className={`text-sm font-medium ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
@@ -275,42 +276,36 @@ export default function ResultsModal({
                         </div>
                       </td>
                       
-                      {/* Parties - Medium */}
                       <td className="px-2 py-3 w-[23%]">
                         <span className={`text-sm ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>
                           {caseItem.caseParties || 'N/A'}
                         </span>
                       </td>
                       
-                      {/* Judge - Medium */}
                       <td className="px-2 py-3 w-[15%]">
                         <span className={`text-sm ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>
                           {caseItem.judgeName || 'N/A'}
                         </span>
                       </td>
                       
-                      {/* Stage - Small */}
                       <td className="px-2 py-3 w-[5%]">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStageColor(caseItem.nextStage)}`}>
                           {caseItem.nextStage || 'N/A'}
                         </span>
                       </td>
-                      
-                      {/* Date - Small */}
+                               
                       <td className="px-2 py-3 w-[5%]">
                         <span className={`text-sm ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {formatDate(caseItem.nextStageDate)}
+                          {formatDate(safeString(caseItem.nextStageDate))}
                         </span>
                       </td>
                       
-                      {/* Time - Smallest */}
                       <td className="px-2 py-3 w-[6%]">
                         <span className={`text-sm ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {caseItem.nextStageTime ? formatTime(caseItem.nextStageTime) : 'N/A'}
+                          {caseItem.nextStageTime ? formatTime(safeString(caseItem.nextStageTime)) : 'N/A'}
                         </span>
                       </td>
                       
-                      {/* Court Room - Small */}
                       <td className="px-2 py-3 w-[20%]">
                         <span className={`text-sm ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>
                           {caseItem.courtRoomName || 'N/A'}
@@ -324,7 +319,6 @@ export default function ResultsModal({
           )}
         </div>
 
-        {/* Footer - Sticky */}
         <div className={`absolute bottom-0 left-0 right-0 flex flex-wrap items-center justify-between gap-3 p-4 border-t ${
           isDarkTheme ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'
         }`}>

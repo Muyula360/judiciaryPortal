@@ -1,8 +1,9 @@
 // hooks/useCaseDetails.ts
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { API_CONFIG } from '@/config/api';
 
+// ✅ Define proper types for API responses
 interface PrimaryCaseResponse {
   data: {
     success: boolean;
@@ -20,6 +21,7 @@ interface PrimaryCaseResponse {
       case_outcome: string;
       decided_date: string;
     };
+    message?: string;
   };
   signature: string;
 }
@@ -49,8 +51,21 @@ interface OtherLevelCaseResponse {
       case_outcome: string;
       is_decided: boolean;
     };
+    message?: string;
   };
   signature: string;
+}
+
+// ✅ Define types for case type responses
+interface CaseTypeItem {
+  id: number;
+  name: string;
+  status?: boolean;
+}
+
+interface CaseTypeResponse {
+  case_subtype?: CaseTypeItem[];
+  data?: CaseTypeItem[] | { case_subtype?: CaseTypeItem[] };
 }
 
 export interface FetchedCase {
@@ -74,9 +89,22 @@ export interface FetchedCase {
   nextStageDate?: string;
 }
 
+// ✅ Define court type
+interface CourtData {
+  id: number;
+  name: string;
+}
+
 export const useCaseFetch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [caseTypesLoading, setCaseTypesLoading] = useState(false);
+  const [caseTypesError, setCaseTypesError] = useState<string | null>(null);
+
+  // ✅ Use refs to prevent multiple fetches
+  const hasFetchedCourts = useRef(false);
+  const hasFetchedCaseTypes = useRef(false);
 
   // --- fetchPrimaryCase (Reference Number - Primary) ---
   const fetchPrimaryCase = useCallback(async (referenceNumber: string): Promise<FetchedCase | null> => {
@@ -269,21 +297,21 @@ export const useCaseFetch = () => {
       }
       
       const data = await response.json();
-      let courts: Array<{ id: number; name: string }> = [];
+      let courts: CourtData[] = [];
       
       if (data && data.court && Array.isArray(data.court)) {
         courts = data.court;
-      } else if (data && data.data && data.data.courts) {
+      } else if (data?.data?.courts && Array.isArray(data.data.courts)) {
         courts = data.data.courts;
       } else if (Array.isArray(data)) {
         courts = data;
-      } else if (data && data.courts) {
-        courts = data.courts;
       }
       
       const map = new Map<string, number>();
       courts.forEach((court) => {
-        map.set(court.name, court.id);
+        if (court.id && court.name) {
+          map.set(court.name, court.id);
+        }
       });
       
       setCourtsMap(map);
@@ -299,6 +327,9 @@ export const useCaseFetch = () => {
 
   // --- fetchCaseTypesWithIds ---
   const fetchCaseTypesWithIds = useCallback(async (courtLevel: string): Promise<Map<string, number>> => {
+    setCaseTypesLoading(true);
+    setCaseTypesError(null);
+    
     try {
       const isPrimary = courtLevel.toLowerCase().includes('primary');
       const endpoint = isPrimary
@@ -309,27 +340,29 @@ export const useCaseFetch = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch case types');
       }
-      const data = await response.json();
+      const data: CaseTypeResponse = await response.json();
       
-      let types: Array<{ id: number; name: string }> = [];
+      let types: CaseTypeItem[] = [];
       
       if (isPrimary) {
         if (Array.isArray(data)) {
           types = data
-            .filter((item: any) => item.status !== false)
-            .map((item: any) => ({ id: item.id, name: item.name }));
+            .filter((item: CaseTypeItem) => item.status !== false)
+            .map((item: CaseTypeItem) => ({ id: item.id, name: item.name }));
         }
       } else {
-        if (data && data.case_subtype && Array.isArray(data.case_subtype)) {
-          types = data.case_subtype.map((item: any) => ({ id: item.id, name: item.name }));
+        if (data?.case_subtype && Array.isArray(data.case_subtype)) {
+          types = data.case_subtype.map((item: CaseTypeItem) => ({ id: item.id, name: item.name }));
         } else if (Array.isArray(data)) {
-          types = data.map((item: any) => ({ id: item.id, name: item.name }));
+          types = data.map((item: CaseTypeItem) => ({ id: item.id, name: item.name }));
         }
       }
       
       const map = new Map<string, number>();
       types.forEach((type) => {
-        map.set(type.name, type.id);
+        if (type.id && type.name) {
+          map.set(type.name, type.id);
+        }
       });
       
       if (isPrimary) {
@@ -340,7 +373,10 @@ export const useCaseFetch = () => {
       return map;
     } catch (error) {
       console.error('Error fetching case types:', error);
+      setCaseTypesError('Failed to load case types');
       return new Map();
+    } finally {
+      setCaseTypesLoading(false);
     }
   }, []);
 
@@ -532,12 +568,21 @@ export const useCaseFetch = () => {
     }
   }, [courtsMap, primaryCaseTypesMap, otherCaseTypesMap, fetchCourtsWithIds, fetchCaseTypesWithIds]);
 
-  // Pre-fetch court and case type mappings on mount
+  // ✅ Pre-fetch with refs to prevent multiple calls
   useEffect(() => {
-    fetchCourtsWithIds();
-    fetchCaseTypesWithIds('Primary Court');
-    fetchCaseTypesWithIds('Other Level Court');
-  }, [fetchCourtsWithIds, fetchCaseTypesWithIds]);
+    if (!hasFetchedCourts.current) {
+      hasFetchedCourts.current = true;
+      fetchCourtsWithIds();
+    }
+  }, [fetchCourtsWithIds]);
+
+  useEffect(() => {
+    if (!hasFetchedCaseTypes.current) {
+      hasFetchedCaseTypes.current = true;
+      fetchCaseTypesWithIds('Primary Court');
+      fetchCaseTypesWithIds('Other Level Court');
+    }
+  }, [fetchCaseTypesWithIds]);
 
   return {
     fetchPrimaryCase,
@@ -549,6 +594,8 @@ export const useCaseFetch = () => {
     fetchCaseTypesWithIds,
     loading,
     error,
+    caseTypesLoading,
+    caseTypesError,
     loadingMappings,
     setError,
     clearError: () => setError(null),

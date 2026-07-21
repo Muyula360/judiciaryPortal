@@ -1,4 +1,3 @@
-// src/controllers/visit.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { VisitService } from '../services/visit.service';
 import { z, ZodError } from 'zod';
@@ -31,7 +30,7 @@ const handleZodError = (err: ZodError) => {
   }));
 };
 
-// ============= CREATE VISIT =============
+
 export const trackVisit = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const sessionId = getSessionId(req);
@@ -70,7 +69,6 @@ export const trackVisit = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// ============= GET ALL STATS =============
 export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const stats = await visitService.getStats();

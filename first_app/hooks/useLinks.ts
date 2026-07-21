@@ -1,6 +1,7 @@
-// app/hooks/useLinks.ts
-import { useState, useEffect, useMemo } from 'react';
+
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '@/lib/api';
+import { AxiosResponse } from 'axios';
 
 export interface LinkData {
   id: number;
@@ -64,6 +65,12 @@ interface UseLinksReturn {
   searchQuery: string;
 }
 
+interface ApiResponse {
+  success: boolean;
+  data: LinkData[] | { links: LinkData[] };
+  message?: string;
+}
+
 export function useLinks({
   categorySlug,
   limit = 10,
@@ -75,82 +82,82 @@ export function useLinks({
   const [error, setError] = useState<string | null>(null);
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   
-  // Use external search query if provided, otherwise use internal
   const searchQuery = externalSearchQuery || internalSearchQuery;
 
-  const fetchLinks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchLinks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      let response;
+    try {
+      let response: AxiosResponse<ApiResponse>;
       
       if (categorySlug) {
-        response = await api.get(`/links/category/${categorySlug}`);
+        response = await api.get<ApiResponse>(`/links/category/${categorySlug}`);
       } else if (showExternalOnly) {
-        response = await api.get('/links/permit/external');
+        response = await api.get<ApiResponse>('/links/permit/external');
       } else {
-        response = await api.get('/links');
+        response = await api.get<ApiResponse>('/links');
       }
 
-      // Check if response is successful
       if (!response.data || !response.data.success) {
         throw new Error(response.data?.message || 'Failed to fetch links');
       }
 
-      let linksData = Array.isArray(response.data.data) ? response.data.data : [];
+      let linksData: LinkData[] = Array.isArray(response.data.data) ? response.data.data : [];
       
-      if (response.data.data && response.data.data.links) {
+      if (response.data.data && 'links' in response.data.data) {
         linksData = response.data.data.links;
       }
 
-      // Filter to only show external links if requested (additional safety)
       if (showExternalOnly) {
-        linksData = linksData.filter(link => link.permit === 'external');
+        linksData = linksData.filter((link: LinkData) => link.permit === 'external');
       }
 
-      // Remove default links that might come from DB
       const defaultSlugs = DEFAULT_LINKS.map(l => l.slug);
-      linksData = linksData.filter(link => !defaultSlugs.includes(link.slug));
+      linksData = linksData.filter((link: LinkData) => !defaultSlugs.includes(link.slug));
 
-      // Apply limit
       if (limit && linksData.length > limit) {
         linksData = linksData.slice(0, limit);
       }
 
       setDbLinks(linksData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching links:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load links');
+      const errorMessage = err && typeof err === 'object' && 'response' in err 
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message 
+        : err instanceof Error ? err.message : 'Failed to load links';
+      setError(errorMessage || 'Failed to load links');
       setDbLinks([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Fetch on mount and when dependencies change
-  useEffect(() => {
-    fetchLinks();
   }, [categorySlug, limit, showExternalOnly]);
 
-  // Combine default links with DB links
+  const hasFetched = useRef(false);
+
+  useEffect(() => {
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchLinks();
+    }
+  }, [fetchLinks]);
+
   const allLinks = useMemo(() => [...DEFAULT_LINKS, ...dbLinks], [dbLinks]);
 
-  // Filter links based on search query
   const filteredLinks = useMemo(() => {
     const search = searchQuery.toLowerCase().trim();
     if (!search) return allLinks;
     
-    return allLinks.filter(link => 
+    return allLinks.filter((link: LinkData) => 
       link.name.toLowerCase().includes(search) ||
       link.desc.toLowerCase().includes(search)
     );
   }, [allLinks, searchQuery]);
 
-  // Refetch function
-  const refetch = () => {
+  const refetch = useCallback(() => {
+    hasFetched.current = false;
     fetchLinks();
-  };
+  }, [fetchLinks]);
 
   return {
     links: dbLinks,

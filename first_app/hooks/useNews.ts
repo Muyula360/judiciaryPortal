@@ -1,5 +1,4 @@
-// hooks/useNews.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface NewsItem {
   newsupdatesID: string;
@@ -22,10 +21,14 @@ export function useNews(options: UseNewsOptions = {}) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   const fetchNews = useCallback(async () => {
+    if (hasFetched.current) return;
+    
     setLoading(true);
     setError(null);
+    hasFetched.current = true;
     
     try {
       const response = await fetch('/api/news');
@@ -69,9 +72,29 @@ export function useNews(options: UseNewsOptions = {}) {
   }, []);
 
   useEffect(() => {
-    if (autoFetch) {
-      fetchNews();
+    if (autoFetch && !hasFetched.current) {
+      const doFetch = async () => {
+        await fetchNews();
+      };
+      doFetch();
     }
+  }, [autoFetch]);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    if (autoFetch && !hasFetched.current) {
+      const fetchData = async () => {
+        if (isMounted) {
+          await fetchNews();
+        }
+      };
+      fetchData();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [autoFetch, fetchNews]);
 
   return {

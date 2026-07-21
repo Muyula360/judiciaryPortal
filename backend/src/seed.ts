@@ -227,7 +227,6 @@ async function seed() {
         categoryId: stakeholderCategory.id,
       },
 
-      // External Systems (Other Systems)
       {
         name: 'Employee Self Service',
         slug: 'employee-self-service',

@@ -1,9 +1,8 @@
-// app/home/(pages)/cause_list/page.tsx
+
 
 'use client';
 
 import { useState, useMemo } from 'react';
-import * as Fa from 'react-icons/fa';
 import { useTheme } from '@/app/context/ThemeContext';
 import SideLinks from '../../components/SideLink';
 import ResultsModal from './components/ResultsModal';
@@ -27,6 +26,14 @@ interface Case {
   caseStage: string;
   caseOutcome?: string;
   courtLevel?: string;
+}
+
+interface FormErrors {
+  court: string;
+  caseNumber?: string;
+  referenceNumber?: string;
+  caseType?: string;
+  filingYear?: string;
 }
 
 export default function CauseList() {
@@ -57,13 +64,7 @@ export default function CauseList() {
   const [filteredCases, setFilteredCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
-  const [errors, setErrors] = useState<{ 
-    court: string; 
-    caseNumber?: string; 
-    referenceNumber?: string;
-    caseType?: string;
-    filingYear?: string;
-  }>({ 
+  const [errors, setErrors] = useState<FormErrors>({ 
     court: '' 
   });
 
@@ -93,9 +94,9 @@ export default function CauseList() {
     return years;
   };
 
-  // Validate form based on active tab
-  const validateForm = () => {
-    const newErrors: any = { court: '' };
+  //  Validate form with proper typing
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = { court: '' };
     let isValid = true;
 
     if (activeTab === 'caseNumber') {
@@ -137,34 +138,19 @@ export default function CauseList() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🔥🔥🔥 FORM SUBMIT HANDLER WAS CALLED! 🔥🔥🔥');
-    console.log('Active Tab:', activeTab);
-    console.log('Form values:', {
-      caseNumber,
-      courtLevel,
-      courtName,
-      filingYear,
-      caseType,
-      referenceNumber,
-      selectedCourt
-    });
-    
     clearError?.();
     setErrors({ court: '' });
     
     if (!validateForm()) {
-      console.log('🔴 Validation failed:', errors);
+      console.log('Validation failed:', errors);
       return;
     }
-    console.log('🟢 Validation passed');
 
     setLoading(true);
     
     try {
       if (activeTab === 'referenceNumber') {
-        console.log('🟡 Fetching by Reference Number:', referenceNumber, 'Court Level:', selectedCourt);
         const fetchedCase = await fetchCaseByLevel(referenceNumber, selectedCourt);
-        console.log('🟡 Fetch Result:', fetchedCase);
         
         if (fetchedCase) {
           setFilteredCases([fetchedCase]);
@@ -175,9 +161,6 @@ export default function CauseList() {
           setShowResultsModal(true);
         }
       } else {
-        console.log('🟡 Fetching by Case Number:', caseNumber);
-        console.log('🟡 Parameters:', { caseNumber, courtLevel, courtName, filingYear, caseType });
-        
         const fetchedCase = await fetchCaseByNumber(
           caseNumber,
           courtLevel,
@@ -185,7 +168,6 @@ export default function CauseList() {
           filingYear,
           caseType
         );
-        console.log('🟡 Fetch Result:', fetchedCase);
         
         if (fetchedCase) {
           setFilteredCases([fetchedCase]);
@@ -196,12 +178,10 @@ export default function CauseList() {
           setShowResultsModal(true);
         }
       }
-    } catch (err) {
-      console.error('🔴 ERROR in handleSubmit:', err);
+    } catch {
       setErrors(prev => ({ ...prev, caseNumber: 'Failed to fetch case details. Please try again.' }));
       setShowResultsModal(true);
     } finally {
-      console.log('🟣 Setting loading to false');
       setLoading(false);
     }
   };
@@ -333,15 +313,15 @@ export default function CauseList() {
           <SideLinks 
             isDarkTheme={isDarkTheme}
             maxHeight="h-[400px]" 
-           />
+          />
         </div>
       </div>
-          <div className="mt-8">
-              <NewsSection 
-              limit={4} 
-              isDarkTheme={isDarkTheme} 
-              />
-            </div>
+      <div className="mt-8">
+        <NewsSection 
+          limit={4} 
+          isDarkTheme={isDarkTheme} 
+        />
+      </div>
 
       <ResultsModal
         isOpen={showResultsModal}

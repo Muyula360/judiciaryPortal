@@ -32,6 +32,6 @@ export const trackVisitMiddleware = async (req: Request, res: Response, next: Ne
     next();
   } catch (error) {
     console.error('Error tracking visit:', error);
-    next(); // Don't block the request
+    next();
   }
 };

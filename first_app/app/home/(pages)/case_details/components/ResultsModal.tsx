@@ -32,6 +32,30 @@ interface ResultsModalProps {
   isDarkTheme: boolean;
 }
 
+interface DetailRowProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string | React.ReactNode;
+  valueColor?: string;
+  isDarkTheme: boolean;
+}
+
+const DetailRow = ({ icon, label, value, valueColor, isDarkTheme }: DetailRowProps) => (
+  <div className={`flex items-start gap-3 p-3 rounded-lg ${isDarkTheme ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50'} transition-colors`}>
+    <div className={`mt-0.5 w-5 h-5 flex-shrink-0 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className={`text-xs font-medium uppercase tracking-wider ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+        {label}
+      </div>
+      <div className={`text-base font-medium ${valueColor || (isDarkTheme ? 'text-white' : 'text-slate-900')} break-words`}>
+        {value || 'N/A'}
+      </div>
+    </div>
+  </div>
+);
+
 export default function ResultsModal({
   isOpen,
   onClose,
@@ -46,7 +70,7 @@ export default function ResultsModal({
   const caseItem = casesArray.length > 0 ? casesArray[0] : null;
 
   // Format helpers
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined | null) => {
     if (!dateString || dateString === 'N/A' || dateString === 'undefined' || dateString === 'null') return 'N/A';
     try {
       const date = new Date(dateString);
@@ -61,7 +85,7 @@ export default function ResultsModal({
     }
   };
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (timeString: string | undefined | null) => {
     if (!timeString || timeString === 'N/A' || timeString === 'undefined' || timeString === 'null') return 'N/A';
     try {
       const [hours, minutes] = timeString.split(':');
@@ -76,13 +100,13 @@ export default function ResultsModal({
   };
 
   //Capitalization helper
-  const capitalizeFirstLetter = (str: string) => {
+  const capitalizeFirstLetter = (str: string | undefined | null) => {
     if (!str) return 'N/A';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
   // Get status color
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined | null) => {
     if (!status) return '';
     const statusLower = status.toLowerCase();
     if (statusLower.includes('decided') || statusLower.includes('allowed') || statusLower.includes('dismissed')) {
@@ -99,7 +123,7 @@ export default function ResultsModal({
   };
 
   // Get status badge color
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status: string | undefined | null) => {
     if (!status) return '';
     const statusLower = status.toLowerCase();
     if (statusLower.includes('decided') || statusLower.includes('allowed') || statusLower.includes('dismissed')) {
@@ -126,29 +150,16 @@ export default function ResultsModal({
            outcome.includes('rejected');
   };
 
-  // Detail row component
-  const DetailRow = ({ icon, label, value, valueColor }: { icon: React.ReactNode; label: string; value: string | React.ReactNode; valueColor?: string }) => (
-    <div className={`flex items-start gap-3 p-3 rounded-lg ${isDarkTheme ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50'} transition-colors`}>
-      <div className={`mt-0.5 w-5 h-5 flex-shrink-0 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className={`text-xs font-medium uppercase tracking-wider ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-          {label}
-        </div>
-        <div className={`text-base font-medium ${valueColor || (isDarkTheme ? 'text-white' : 'text-slate-900')} break-words`}>
-          {value || 'N/A'}
-        </div>
-      </div>
-    </div>
-  );
+  // Safely get the date value
+  const getDateValue = (): string => {
+    return caseItem?.date || caseItem?.filingDate || 'N/A';
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={`relative w-full max-w-3xl max-h-[90vh] rounded-2xl overflow-hidden ${
         isDarkTheme ? 'bg-slate-900' : 'bg-white'
       } shadow-2xl`}>
-        {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b ${
           isDarkTheme ? 'border-slate-700' : 'border-gray-200'
         }`}>
@@ -158,13 +169,13 @@ export default function ResultsModal({
             </div>
             <div>
               <h2 className={`text-xl font-bold ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
-                Case Details  -  {caseItem?.courtName && (
+                Case Details
+              </h2>
+              {caseItem?.courtName && (
                 <span className={`text-sm ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
                   {caseItem.courtName}
                 </span>
               )}
-              </h2>
-              
             </div>
           </div>
           <button
@@ -224,8 +235,9 @@ export default function ResultsModal({
                   )}
                 </div>
               </div>
-                  {/* case parties  */}
-               <div className={`p-4 rounded-md`}>
+
+              {/* Case Parties */}
+              <div className={`p-4 rounded-md`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className={`text-xs font-medium uppercase tracking-wider ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -244,18 +256,21 @@ export default function ResultsModal({
                   icon={<Fa.FaGavel className={`w-5 h-5 ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`} />}
                   label="Case Title"
                   value={caseItem.caseTitle || 'N/A'}
+                  isDarkTheme={isDarkTheme}
                 />
                 
                 <DetailRow
                   icon={<Fa.FaUserTie className={`w-5 h-5 ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`} />}
                   label="Judge / Magistrate"
                   value={caseItem.judgeName || 'N/A'}
+                  isDarkTheme={isDarkTheme}
                 />
                 
                 <DetailRow
                   icon={<Fa.FaCalendarAlt className={`w-5 h-5 ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`} />}
                   label="Filing Date"
-                  value={formatDate(caseItem.date || caseItem.filingDate)}
+                  value={formatDate(getDateValue())}
+                  isDarkTheme={isDarkTheme}
                 />
 
                 {caseItem.caseOutcome && (
@@ -263,6 +278,7 @@ export default function ResultsModal({
                     icon={<Fa.FaCheckCircle className={`w-5 h-5 ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`} />}
                     label="Case Status"
                     value={capitalizeFirstLetter(caseItem.caseOutcome)}
+                    isDarkTheme={isDarkTheme}
                     valueColor={getStatusColor(caseItem.caseOutcome)}
                   />
                 )}
@@ -273,6 +289,7 @@ export default function ResultsModal({
                       icon={<Fa.FaCalendarCheck className={`w-5 h-5 ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`} />}
                       label="Decision Date"
                       value={formatDate(caseItem.decidedDate)}
+                      isDarkTheme={isDarkTheme}
                     />
                   )
                 ) : (
@@ -281,6 +298,7 @@ export default function ResultsModal({
                       icon={<Fa.FaClock className={`w-5 h-5 ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`} />}
                       label="Next Stage"
                       value={`${caseItem.caseStage || 'Next Stage'} on ${formatDate(caseItem.nextStageDate)}`}
+                      isDarkTheme={isDarkTheme}
                     />
                   )
                 )}
@@ -294,7 +312,6 @@ export default function ResultsModal({
           isDarkTheme ? 'border-slate-700' : 'border-gray-200'
         }`}>
           <div className={`text-sm ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-            
           </div>
           <div className="flex flex-wrap gap-2">
             <button

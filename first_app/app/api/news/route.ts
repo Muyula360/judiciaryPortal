@@ -1,4 +1,3 @@
-// app/api/news/route.ts
 import { NextResponse } from 'next/server';
 import { API_CONFIG } from '@/config/api';
 

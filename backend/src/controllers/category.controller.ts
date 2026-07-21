@@ -1,4 +1,3 @@
-// src/controllers/category.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { CategoryService } from '../services/category.service';
 import { z } from 'zod';

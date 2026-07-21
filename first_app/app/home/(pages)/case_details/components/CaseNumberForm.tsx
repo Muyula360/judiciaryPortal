@@ -1,5 +1,3 @@
-// app/home/(pages)/cause_list/components/CaseNumberForm.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -68,7 +66,8 @@ export default function CaseNumberForm({
   onReset,
   fetchingCourts = false,
 }: CaseNumberFormProps) {
-  const { fetchCaseTypes, caseTypesLoading, caseTypesError } = useCaseFetch();
+
+  const { fetchCaseTypes, loading: caseTypesLoading, error: caseTypesError } = useCaseFetch();
   const [caseTypes, setCaseTypes] = useState<string[]>([]);
 
   // Fetch case types when court level changes
@@ -93,7 +92,6 @@ export default function CaseNumberForm({
 
   return (
     <>
-      {/* Row 1: Case Number and Filing Year */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <TextInput
           value={caseNumber}
@@ -118,7 +116,6 @@ export default function CaseNumberForm({
         />
       </div>
 
-      {/* Row 2: Court Level */}
       <SearchableDropdown
         value={courtLevel}
         searchTerm={courtLevelSearchTerm}
@@ -133,7 +130,6 @@ export default function CaseNumberForm({
         icon={<Fa.FaBalanceScale className="w-4 h-4" />}
       />
 
-      {/* Row 3: Court Name */}
       <SearchableDropdown
         value={courtName}
         searchTerm={courtNameSearchTerm}
@@ -149,7 +145,6 @@ export default function CaseNumberForm({
         disabled={fetchingCourts}
       />
 
-      {/* Row 4: Case Type - Dynamic based on Court Level */}
       <SearchableDropdown
         value={caseType}
         searchTerm={caseTypeSearchTerm}
@@ -170,7 +165,6 @@ export default function CaseNumberForm({
         disabled={!courtLevel || caseTypesLoading || !!caseTypesError}
       />
 
-      {/* Row 5: Buttons */}
       <FormButtons
         isDarkTheme={isDarkTheme}
         searchLabel="Apply filters"

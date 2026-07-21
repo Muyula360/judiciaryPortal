@@ -73,7 +73,6 @@ export default function ReferenceNumberForm({
         onSearch={() => {}}
         onReset={onReset}
         isLoading={loading || apiLoading}
-        showReset={true}
       />
     </>
   );

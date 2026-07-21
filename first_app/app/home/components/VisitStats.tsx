@@ -1,10 +1,19 @@
-// app/components/VisitsAnalytics.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import * as Fa from 'react-icons/fa';
 import { useTheme } from '@/app/context/ThemeContext';
 import api from '@/lib/api';
+
+// ✅ Define proper type for stats
+interface VisitStatsData {
+  daily: number;
+  weekly: number;
+  monthly: number;
+  yearly: number;
+  total: number;
+  lastUpdated?: string;
+}
 
 interface SummaryStat {
   id: number;
@@ -17,9 +26,12 @@ interface SummaryStat {
 export default function VisitsAnalytics() {
   const { isDarkTheme } = useTheme();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<VisitStatsData | null>(null); // ✅ Fixed any type
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // ✅ Use ref to prevent multiple initial fetches
+  const hasFetched = useRef(false);
 
   // Fetch stats from API
   const fetchStats = useCallback(async (showLoading = true) => {
@@ -40,19 +52,20 @@ export default function VisitsAnalytics() {
     }
   }, []);
 
-  // Initial fetch
+  // ✅ Initial fetch with ref guard
   useEffect(() => {
-    fetchStats(true);
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchStats(true);
+    }
   }, [fetchStats]);
 
-  // ✅ Listen for visit tracking events
+  // Listen for visit tracking events
   useEffect(() => {
     const handleVisitTracked = () => {
-      // Refresh stats when a visit is tracked
       fetchStats(false);
     };
 
-    // Listen for custom event
     window.addEventListener('visitTracked', handleVisitTracked);
 
     return () => {
@@ -60,7 +73,6 @@ export default function VisitsAnalytics() {
     };
   }, [fetchStats]);
 
-  // Summary Stats Data
   const summaryStats: SummaryStat[] = useMemo(() => {
     if (!stats) {
       return [
@@ -79,7 +91,6 @@ export default function VisitsAnalytics() {
     ];
   }, [stats]);
 
-  // Get color classes
   const getColorClasses = (color: string) => {
     const colors: Record<string, string> = {
       yellow: isDarkTheme ? 'text-yellow-400' : 'text-yellow-500',
@@ -90,7 +101,6 @@ export default function VisitsAnalytics() {
     return colors[color] || colors.blue;
   };
 
-  // Manual refresh handler
   const handleRefresh = () => {
     fetchStats(false);
   };
@@ -143,14 +153,11 @@ export default function VisitsAnalytics() {
 
   return (
     <div className="mb-10 py-8 relative">
-      {/* Refresh Indicator */}
       {refreshing && (
         <div className="absolute top-0 right-4">
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-rose-500 border-t-transparent"></div>
         </div>
       )}
-
-      {/* Section Title */}
       <div className="mb-8 text-center">
         <h2 className={`text-2xl md:text-3xl font-bold ${isDarkTheme ? 'text-white' : 'text-white'}`}>
           📊 Visits Statistics
@@ -159,8 +166,6 @@ export default function VisitsAnalytics() {
           Real-time analytics and visitor insights
         </p>
       </div>
-
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 md:gap-8 px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 2xl:px-48">
         {summaryStats.map((stat) => {
           const color = getColorClasses(stat.color);
@@ -169,7 +174,6 @@ export default function VisitsAnalytics() {
               key={stat.id} 
               className="text-center transition-all duration-300 hover:scale-105"
             >
-              {/* Icon + Title */}
               <div className={`flex items-center justify-center gap-1.5 mb-2 ${color}`}>
                 <span className="text-base sm:text-lg md:text-xl">{stat.icon}</span>
                 <span className={`text-xs sm:text-md font-bold ${isDarkTheme ? 'text-slate-300' : 'text-white'}`}>
@@ -177,7 +181,6 @@ export default function VisitsAnalytics() {
                 </span>
               </div>
               
-              {/* Value */}
               <div className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-mono ${isDarkTheme ? 'text-white' : 'text-white'}`}>
                 {stat.value}
               </div>

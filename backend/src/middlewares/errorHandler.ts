@@ -12,11 +12,10 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     });
   }
 
-  // Prisma errors
   if (err.code && err.code === 'P2025') {
     return res.status(404).json({ success: false, message: err.message || 'Record not found' });
   }
 
-  console.error(err); // log for debugging
+  console.error(err);
   res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
 };

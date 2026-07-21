@@ -1,11 +1,13 @@
+// app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { useLogin } from '@/hooks/useAuth';
 import Link from 'next/link';
 import TextInput from '@/app/components/TextInput';
-import FormButtons from '@/app/components/FormButtons';
+import Button from '@/app/components/Button';
 import { useTheme } from '@/app/context/ThemeContext';
+import * as Fa from 'react-icons/fa';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -53,20 +55,13 @@ export default function LoginPage() {
     }
   };
 
-  const handleReset = () => {
-    setEmail('');
-    setPassword('');
-    setEmailError('');
-    setPasswordError('');
-  };
-
   return (
     <div className={`max-w-md m-auto mt-28 w-full space-y-8 p-10 rounded-lg shadow-lg transition-colors duration-300 ${
                 isDarkTheme 
                   ? 'bg-slate-900/50 border-slate-700/50 ' 
                   : 'bg-white border-slate-200/80'
               }`}>
-      <h2 className={`text-2xl font-bold text-center text-gray-900 dark:text-white ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+      <h2 className={`text-2xl font-bold text-center ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
         Sign In
       </h2>
       
@@ -99,22 +94,21 @@ export default function LoginPage() {
           className="w-full"
         />
 
-        <FormButtons
-          searchLabel={login.isPending ? 'Logging in...' : 'Login'}
-          resetLabel="Clear"
-          isDarkTheme={isDarkTheme}
-          onSearch={() => handleSubmit(new Event('submit') as any)}
-          onReset={handleReset}
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          fullWidth
           isLoading={login.isPending}
-          showIcons={false}
-          searchClassName="w-full"
-          showReset={false}
-        />
+          icon={<Fa.FaSignInAlt className="w-4 h-4" />}
+        >
+          {login.isPending ? 'Logging in...' : 'Login'}
+        </Button>
 
         {login.error && (
-            <p className="text-red-600 dark:text-red-400 text-sm text-center mt-0">
-               'Incorrect credentials. Please try again.'
-            </p>
+          <p className="text-red-600 dark:text-red-400 text-sm text-center">
+            Incorrect credentials. Please try again.
+          </p>
         )}
 
         <div className="flex flex-col items-center gap-2 pt-1">

@@ -29,24 +29,24 @@ export const generatePDF = ({
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
-    // Helper to get case title
-  const getCaseTitle = (caseItem: Case) => {
-  return caseItem.caseReference
-    ? `${caseItem.caseTitle}\n(${caseItem.caseReference})`
-    : caseItem.caseTitle;
-};
+    const safeString = (value: string | undefined | null): string => {
+      return value || 'N/A';
+    };
     
-    // Header - Judiciary
+    const getCaseTitle = (caseItem: Case): string => {
+      return caseItem.caseReference
+        ? `${safeString(caseItem.caseTitle)}\n(${safeString(caseItem.caseReference)})`
+        : safeString(caseItem.caseTitle);
+    };
+    
     doc.setFontSize(18);
     doc.setTextColor(40, 40, 40);
     doc.text('THE JUDICIARY OF TANZANIA', pageWidth / 2, 20, { align: 'center' });
 
-    // Court name
     doc.setFontSize(14);
     doc.setTextColor(220, 38, 38);
     doc.text(selectedCourt || 'Cause List', pageWidth / 2, 28, { align: 'center' });
 
-    // Date range and title
     doc.setFontSize(11);
     doc.setTextColor(80, 80, 80);
     let dateInfo = 'Cause List';
@@ -54,20 +54,17 @@ export const generatePDF = ({
       dateInfo = `Cause List From ${formatDate(startDate)} to ${formatDate(endDate)}`;
     }
     doc.text(dateInfo, pageWidth / 2, 35, { align: 'center' });
-
-    // Table data
-    const tableData = cases.map((caseItem, index) => [
+    const tableData: string[][] = cases.map((caseItem, index) => [
       (index + 1).toString(),
       getCaseTitle(caseItem),
-      caseItem.caseParties,
-      caseItem.judgeName,
-      caseItem.nextStage,
-      formatDate(caseItem.nextStageDate),
-      caseItem.nextStageTime ? formatTime(caseItem.nextStageTime) : 'N/A',
-      caseItem.courtRoomName,
+      safeString(caseItem.caseParties),
+      safeString(caseItem.judgeName),
+      safeString(caseItem.nextStage),
+      formatDate(safeString(caseItem.nextStageDate)),
+      caseItem.nextStageTime ? formatTime(safeString(caseItem.nextStageTime)) : 'N/A',
+      safeString(caseItem.courtRoomName),
     ]);
     
-    // Generate table without page numbers first
     autoTable(doc, {
       head: [[
         'SN',
@@ -144,7 +141,6 @@ export const generatePDF = ({
     const dateStr = new Date().toISOString().split('T')[0];
     const fileName = `Cause_List_${courtName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
     
-    // Save with custom filename
     doc.save(fileName);
     
   } catch (error) {

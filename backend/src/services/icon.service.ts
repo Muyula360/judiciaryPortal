@@ -1,4 +1,3 @@
-// src/services/icon.service.ts
 import { prisma } from '../config/database';
 
 export const validateIconExists = async (iconName: string) => {
@@ -50,7 +49,6 @@ export class IconService {
     name: string;
     label?: string;
   }) {
-    // Check if icon already exists
     const existing = await prisma.icon.findUnique({
       where: { name: data.name },
     });

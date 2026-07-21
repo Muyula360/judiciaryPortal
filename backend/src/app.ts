@@ -14,19 +14,16 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/links', linkRoutes);
 app.use('/api/icons', iconRoutes);
 app.use('/api/visits', visitRoutes);
 
-// Health check (also tests DB connectivity)
 app.get('/api/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -36,7 +33,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Error handling
 app.use(errorHandler);
 
 export default app;

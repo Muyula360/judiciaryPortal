@@ -14,7 +14,7 @@ export class CategoryService {
           },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { id: 'asc' },
     });
   }
 
@@ -180,7 +180,7 @@ export class CategoryService {
           include: {
             icon: true,
           },
-          orderBy: { name: 'asc' },
+          orderBy: { id: 'asc' },
         },
       },
     });

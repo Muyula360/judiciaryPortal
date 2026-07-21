@@ -48,7 +48,6 @@ export default function NewsSection({ isDarkTheme = false, limit = 5 }: NewsSect
   if (loading) {
     return (
       <div className="w-full rounded-lg py-6">
-        {/* Section Title Skeleton */}
         <div className="mb-6 text-center">
           <div className={`h-8 w-48 rounded animate-pulse mx-auto ${isDarkTheme ? 'bg-slate-700' : 'bg-gray-200'}`}></div>
           <div className={`h-4 w-64 rounded animate-pulse mt-2 mx-auto ${isDarkTheme ? 'bg-slate-700' : 'bg-gray-200'}`}></div>
@@ -105,7 +104,6 @@ export default function NewsSection({ isDarkTheme = false, limit = 5 }: NewsSect
 
   return (
     <div className="w-full rounded-md py-6 mb-10">
-      {/* Section Title */}
       <div className="mb-6 text-center">
         <h2 className={`text-2xl md:text-3xl font-bold flex items-center justify-center gap-2 ${isDarkTheme ? 'text-white' : 'text-white'}`}>
           <Fa.FaNewspaper className="text-red-500" />
@@ -155,7 +153,6 @@ export default function NewsSection({ isDarkTheme = false, limit = 5 }: NewsSect
                       <Fa.FaImage className="w-12 h-12 text-slate-400 dark:text-slate-500" />
                     </div>
                   )}
-                  {/* Date Badge */}
                   <div className={`absolute bottom-3 right-3 px-3 py-1.5 rounded-md text-xs font-medium backdrop-blur-sm ${
                     isDarkTheme
                       ? 'bg-slate-900/80 text-slate-200'
@@ -164,7 +161,6 @@ export default function NewsSection({ isDarkTheme = false, limit = 5 }: NewsSect
                     <Fa.FaCalendarAlt className="inline mr-1.5 w-3 h-3" />
                     {formatDate(item.postedAt)}
                   </div>
-                  {/* Read More Badge */}
                   <div className="absolute top-3 right-3 px-2.5 py-1 rounded-md text-xs font-medium bg-red-500 text-white">
                     <Fa.FaExternalLinkAlt className="inline mr-1 w-3 h-3" />
                     Read More

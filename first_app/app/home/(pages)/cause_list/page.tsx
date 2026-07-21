@@ -23,7 +23,7 @@ export default function CauseList() {
     loading,
     error,
     fetchCases,
-    uniqueCourts,  // This already has fallback courts from the hook
+    uniqueCourts, 
     fetchingCourts,
     clearCases,
   } = useCaseDetails();
@@ -37,7 +37,6 @@ export default function CauseList() {
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [errors, setErrors] = useState({ court: '', startDate: '', endDate: '' });
 
-  // Filter courts based on search term - use uniqueCourts directly from hook
   const filteredCourts = useMemo(() => {
     if (!courtSearchTerm) return uniqueCourts;
     return uniqueCourts.filter(court =>
@@ -145,21 +144,38 @@ export default function CauseList() {
   };
 
   const sortedCases = [...filteredCases].sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
+    // Get values with proper types
+    let aValue: string | number | boolean | Date | null | undefined = a[sortField]; 
+    let bValue: string | number | boolean | Date | null | undefined = b[sortField]; 
     
+    // Handle date fields
     if (sortField === 'nextStageDate' || sortField === 'filingDate') {
-      aValue = a[sortField] ? new Date(a[sortField] as string).getTime() : 0;
-      bValue = b[sortField] ? new Date(b[sortField] as string).getTime() : 0;
+      const aDate = a[sortField] ? new Date(a[sortField] as string) : null;
+      const bDate = b[sortField] ? new Date(b[sortField] as string) : null;
+      aValue = aDate ? aDate.getTime() : 0;
+      bValue = bDate ? bDate.getTime() : 0;
     }
     
+    // Handle string comparison
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return sortDirection === 'asc' 
         ? aValue.localeCompare(bValue) 
         : bValue.localeCompare(aValue);
     }
     
-    return sortDirection === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+    // Handle number comparison
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    
+    // Handle boolean comparison
+    if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+      return sortDirection === 'asc' 
+        ? (aValue === bValue ? 0 : aValue ? 1 : -1)
+        : (aValue === bValue ? 0 : aValue ? -1 : 1);
+    }
+    
+    return 0;
   });
 
   const handleSort = (field: keyof Case) => {
@@ -206,9 +222,6 @@ export default function CauseList() {
     setShowResultsModal(false);
   };
 
-  // Debug: Log what courts are available
-  console.log('Courts from hook:', uniqueCourts);
-
   return (
     <div className="flex-grow px-5 sm:px-20 md:px-30 lg:px-40 xl:px-50 2xl:px-60 pt-4 sm:pt-4 md:pt-4 lg:pt-5 pb-3">
       <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-10 xl:gap-12">
@@ -246,7 +259,6 @@ export default function CauseList() {
                   : 'bg-white/80 border-slate-200/80 hover:border-slate-300'
               }`}>
                 <div className="flex flex-col gap-4">
-                  {/* Court Name */}
                   <SearchableDropdown
                     value={selectedCourt}
                     searchTerm={courtSearchTerm}
@@ -262,7 +274,6 @@ export default function CauseList() {
                     disabled={fetchingCourts}
                   />
 
-                  {/* Start Date */}
                   <DateInput
                     value={startDate}
                     label="Start Date"
@@ -273,7 +284,6 @@ export default function CauseList() {
                     icon={<Fa.FaCalendarAlt className="w-4 h-4" />}
                   />
 
-                  {/* End Date */}
                   <DateInput
                     value={endDate}
                     label="End Date"
@@ -284,7 +294,6 @@ export default function CauseList() {
                     icon={<Fa.FaCalendarCheck className="w-4 h-4" />}
                   />
 
-                  {/* Buttons */}
                   <FormButtons
                     isDarkTheme={isDarkTheme}
                     searchLabel="Apply Filter"
@@ -314,7 +323,6 @@ export default function CauseList() {
           />
         </div>
 
-      {/* Results Modal */}
       <ResultsModal
         isOpen={showResultsModal}
         onClose={closeResultsModal}

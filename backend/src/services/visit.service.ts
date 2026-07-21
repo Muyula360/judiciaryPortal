@@ -1,4 +1,3 @@
-// src/services/visit.service.ts
 import { prisma } from '../config/database';
 
 export class VisitService {
